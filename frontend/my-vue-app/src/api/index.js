@@ -46,10 +46,10 @@ export default api
 export const authAPI = {
   login: (credentials) => api.post('/auth/login/', credentials),
   register: (userData) => api.post('/auth/register/', userData),
-  profile: () => api.get('/auth/profile/'),
-  userProfile: (id) => api.get(`/auth/${id}/`),
-  userPosts: (id) => api.get(`/auth/${id}/posts/`),
-  updateProfile: (data) => api.put('/auth/profile/', data),
+  profile: () => api.get('/auth/profile/'),  // 获取当前用户资料
+  userProfile: (id) => api.get(`/auth/${id}/`),  // 获取指定用户资料
+  userPosts: (id) => api.get(`/auth/${id}/posts/`),  // 获取用户帖子
+  updateProfile: (data) => api.put('/auth/profile/', data),  // 更新当前用户资料
   followUser: (id) => api.post(`/auth/${id}/follow/`),
   unfollowUser: (id) => api.post(`/auth/${id}/unfollow/`)
 }

@@ -21,11 +21,12 @@ defineEmits(['postDeleted'])
         v-for="post in posts"
         :key="post.id"
         :post="post"
-        @post-deleted="$emit('postDeleted')"
+        @post-deleted="$emit('postDeleted', post.id)"
       />
     </template>
   </div>
 </template>
+
 <style scoped>
 .post-list {
   margin-top: 1rem;
@@ -35,5 +36,6 @@ defineEmits(['postDeleted'])
   text-align: center;
   padding: 2rem;
   color: #666;
+  font-style: italic;
 }
 </style>

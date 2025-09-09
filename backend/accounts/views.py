@@ -1,14 +1,15 @@
 from django.shortcuts import render
 from rest_framework import status
 from rest_framework.decorators import api_view,permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from django.contrib.auth import authenticate
 from .serializers import UserSeralizers, UserRegistrationSerializer, UserUpdateSerializer
-
+from posts.models import Post
+from posts.serializers import PostSeralizers
 # Create your views here.
 User=get_user_model()
 
@@ -83,6 +84,20 @@ class UpdateProfileView(APIView):
             return Response(UserSeralizers(request.user,context={'request':request}).data)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
     
+
+class CurrentUserProfileView(APIView):
+    parser_classes=[IsAuthenticated]
+    def get(self,request):
+        serializer=UserSeralizers(request.user,context={'request':request})
+        return Response(serializer.data)
+    
+    def put(self,request):
+        serializer=UserUpdateSerializer(request.user,data=request.data,partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(UserSeralizers(request.user,context={'request':request}).data)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
 
 
 @api_view(['GET'])

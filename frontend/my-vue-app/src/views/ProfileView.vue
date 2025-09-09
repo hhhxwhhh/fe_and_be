@@ -15,10 +15,7 @@ onMounted(async () => {
     const response = await authAPI.profile()
     user.value = response.data
     store.setUser(user.value)
-    
-    // 在实际应用中，这里应该获取用户发布的帖子
-    // 由于我们没有这个API，暂时留空
-    userPosts.value = []
+    userPosts.value = user.value.posts || []
   } catch (error) {
     console.error('获取用户信息失败:', error)
   } finally {
@@ -42,7 +39,7 @@ onMounted(async () => {
         </div>
         
         <h2>我的帖子</h2>
-        <PostList :posts="userPosts" @post-deleted="userPosts = userPosts.filter(p => !p.deleted)" />
+        <PostList :posts="userPosts" @post-deleted="userPosts = userPosts.filter(p => p.id !== $event)" />
       </div>
     </div>
   </div>
@@ -69,5 +66,10 @@ onMounted(async () => {
 
 .user-info p {
   margin: 0.5rem 0;
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
 }
 </style>
