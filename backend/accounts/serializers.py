@@ -37,13 +37,23 @@ class UserSeralizers(serializers.ModelSerializer):
         return user
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True, min_length=8)
     
     class Meta:
         model = User
         fields = ('id', 'username', 'email', 'password')
         read_only_fields = ('id',)
         
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("该邮箱已被注册")
+        return value
+        
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("该用户名已被使用")
+        return value
+    
     def create(self, validated_data):
         password = validated_data.pop('password')
         user = User(**validated_data)

@@ -25,6 +25,7 @@ class RegisterView(APIView):
                 'access':str(refresh.access_token),
                 'user':UserSeralizers(user,context={'request':request}).data
             },status=status.HTTP_201_CREATED)
+        # 返回详细的错误信息
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
     
 class LoginView(APIView):
@@ -50,7 +51,7 @@ class UserProfileView(APIView):
             user=User.objects.get(pk=pk)
             serializer=UserSeralizers(user,context={'request':request})
             return Response(serializer.data)
-        except user.DoesNotExist:
+        except User.DoesNotExist:
             return Response({'error':'User not found'},status=status.HTTP_404_NOT_FOUND)
         
 
