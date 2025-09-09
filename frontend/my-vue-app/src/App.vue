@@ -1,28 +1,38 @@
 <script setup>
 import { RouterView } from 'vue-router'
+import { ElContainer, ElHeader, ElMain, ElMenu, ElMenuItem, ElIcon } from 'element-plus'
+import { HomeFilled, UserFilled } from '@element-plus/icons-vue'
 </script>
 
 <template>
-  <div id="app">
-    <header>
-      <nav class="navbar">
+  <el-container id="app">
+    <el-header>
+      <el-menu
+        :default-active="$route.path"
+        mode="horizontal"
+        router
+        background-color="#42b883"
+        text-color="#fff"
+        active-text-color="#ffd04b"
+      >
         <div class="nav-brand">
           <h2>Social Network</h2>
         </div>
-        <ul class="nav-menu">
-          <li class="nav-item">
-            <router-link to="/" class="nav-link">首页</router-link>
-          </li>
-          <li class="nav-item">
-            <router-link to="/profile" class="nav-link">个人资料</router-link>
-          </li>
-        </ul>
-      </nav>
-    </header>
-    <main>
+        <el-menu-item index="/"> 
+          <el-icon><HomeFilled /></el-icon>
+          <span>首页</span>
+        </el-menu-item>
+        <el-menu-item index="/profile">
+          <el-icon><UserFilled /></el-icon>
+          <span>个人资料</span>
+        </el-menu-item>
+      </el-menu>
+    </el-header>
+    
+    <el-main>
       <RouterView />
-    </main>
-  </div>
+    </el-main>
+  </el-container>
 </template>
 
 <style scoped>
@@ -31,32 +41,23 @@ import { RouterView } from 'vue-router'
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
+  height: 100vh;
 }
 
-.navbar {
+.el-header {
+  padding: 0;
+}
+
+.nav-brand {
+  float: left;
+  color: white;
+  margin-right: 2rem;
+  padding: 0 1rem;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
-  background-color: #42b883;
-  color: white;
 }
 
-.nav-menu {
-  display: flex;
-  list-style: none;
-}
-
-.nav-item {
-  margin-left: 1rem;
-}
-
-.nav-link {
-  color: white;
-  text-decoration: none;
-}
-
-.nav-link:hover {
-  text-decoration: underline;
+.nav-brand h2 {
+  margin: 0;
 }
 </style>

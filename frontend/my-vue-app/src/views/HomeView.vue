@@ -5,6 +5,7 @@ import PostForm from '../components/PostForm.vue'
 import PostList from '../components/PostList.vue'
 import HelloWorld from '../components/HelloWorld.vue'
 import { postAPI } from '../api'
+import { ElRow, ElCol, ElCard, ElSkeleton } from 'element-plus'
 
 const store = useMainStore()
 const loading = ref(false)
@@ -30,37 +31,39 @@ const loadPosts = async () => {
   <div class="home">
     <HelloWorld />
     
-    <div class="posts-section">
-      <h2>帖子</h2>
-      <PostForm @post-created="loadPosts" />
-      
-      <div v-if="loading" class="loading">
-        加载中...
-      </div>
-      
-      <PostList v-else />
-    </div>
+    <el-row justify="center">
+      <el-col :span="16">
+        <el-card class="posts-card">
+          <template #header>
+            <div class="card-header">
+              <span>帖子</span>
+            </div>
+          </template>
+          
+          <PostForm @post-created="loadPosts" />
+          
+          <div v-if="loading">
+            <el-skeleton :rows="4" animated />
+          </div>
+          
+          <PostList v-else />
+        </el-card>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
 <style scoped>
 .home {
-  max-width: 800px;
-  margin: 0 auto;
   padding: 1rem;
 }
 
-.posts-section {
+.posts-card {
   margin-top: 2rem;
 }
 
-.posts-section h2 {
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-.loading {
-  text-align: center;
-  padding: 2rem;
+.card-header {
+  font-size: 1.2rem;
+  font-weight: bold;
 }
 </style>
