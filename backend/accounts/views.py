@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from django.contrib.auth import authenticate
-from .serializers import UserSeralizers,UserUpdateSerializer
+from .serializers import UserSeralizers, UserRegistrationSerializer, UserUpdateSerializer
 
 # Create your views here.
 User=get_user_model()
@@ -16,7 +16,7 @@ class RegisterView(APIView):
     permission_classes=[AllowAny]
 
     def post(self,request):
-        serializer=UserSeralizers(data=request.data)
+        serializer=UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user=serializer.save()
             refresh=RefreshToken.for_user(user)
@@ -29,6 +29,7 @@ class RegisterView(APIView):
     
 class LoginView(APIView):
     permission_classes=[AllowAny]
+    
     def post(self,request):
         email=request.data.get('email')
         password=request.data.get('password')

@@ -14,24 +14,43 @@ class UserSeralizers(serializers.ModelSerializer):
     class Meta:
         model=User
         fields = ('id', 'username', 'email', 'bio', 'birth_date', 'avatar', 
-                  'followers_count', 'following_count', 'is_following', 'posts')
+                  'followers_count', 'following_count', 'is_following', 'posts', 'password')
         read_only_fields = ('id',)
+        
     def get_followers_count(self, obj):
         return obj.followers.count()
+        
     def get_following_count(self, obj):
         return obj.following.count()
+        
     def get_is_following(self,obj):
         request=self.context.get('request')
-        if request and hasattr(request, 'user') and request.is_authenticated:
+        if request and hasattr(request, 'user') and request.user.is_authenticated:
             return obj.followers.filter(id=request.user.id).exists()
         return False
+        
     def create(self, validated_data):
         password=validated_data.pop('password')
         user=User(**validated_data)
         user.set_password(password)
         user.save()
         return user
+
+class UserRegistrationSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
     
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'email', 'password')
+        read_only_fields = ('id',)
+        
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+        user = User(**validated_data)
+        user.set_password(password)
+        user.save()
+        return user
+
 class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model=User

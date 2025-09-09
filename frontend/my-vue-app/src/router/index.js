@@ -41,7 +41,7 @@ const router = createRouter({
 // 路由守卫
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
-  const publicPages = ['/login', '/register']
+  const publicPages = ['/login', '/register','/']
   const authRequired = !publicPages.includes(to.path)
 
   if (authRequired && !token) {
