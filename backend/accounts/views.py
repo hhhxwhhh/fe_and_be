@@ -80,3 +80,13 @@ class UpdateProfileView(APIView):
             serializer.save()
             return Response(UserSeralizers(request.user,context={'request':request}).data)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+    
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def hello_world(request):
+    return Response({
+        'message':'hello from django backend',
+        'status':'success'
+    })
