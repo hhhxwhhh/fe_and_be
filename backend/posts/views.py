@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Post, Comment
@@ -9,10 +9,15 @@ from .serializers import PostSeralizers, CommentSeralizers
 from interactions.models import Like
 from django.contrib.auth import get_user_model
 from django.db import models
+from rest_framework.parsers import MultiPartParser, FormParser
+
 # Create your views here.
 User=get_user_model()
 
 class PostListView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)  # 添加解析器以处理文件上传
+    
     def get(self,request):
         if request.user.is_authenticated:
             following_users=request.user.following.all()
@@ -25,6 +30,7 @@ class PostListView(APIView):
 
         serializer=PostSeralizers(posts,many=True,context={'request':request})
         return Response(serializer.data)
+        
     def post(self,request):
         serializer=PostSeralizers(data=request.data,context={'request':request})
         if serializer.is_valid():
@@ -33,6 +39,9 @@ class PostListView(APIView):
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
     
 class PostDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
+    
     def get(self, request, pk):
         try:
             post = Post.objects.get(pk=pk)
@@ -62,12 +71,10 @@ class PostDetailView(APIView):
             if post.author != request.user:
                 return Response({'error': 'You do not have permission to delete this post'}, 
                               status=status.HTTP_403_FORBIDDEN)
-            
             post.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response({'message': 'Post deleted successfully'})
         except Post.DoesNotExist:
             return Response({'error': 'Post not found'}, status=status.HTTP_404_NOT_FOUND)
-        
 class CommentView(APIView):
     def post(self, request, pk):
         try:

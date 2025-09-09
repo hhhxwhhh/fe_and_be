@@ -2,10 +2,7 @@ import axios from 'axios'
 
 const api = axios.create({
   baseURL: 'http://localhost:8000/api',
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json'
-  }
+  timeout: 10000
 })
 
 // 请求拦截器
@@ -15,6 +12,15 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+    
+    // 如果是FormData，让浏览器自动设置Content-Type（包含boundary）
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    } else if (!config.headers['Content-Type']) {
+      // 只对非FormData请求设置默认Content-Type
+      config.headers['Content-Type'] = 'application/json';
+    }
+    
     return config
   },
   error => {
@@ -41,7 +47,11 @@ export const authAPI = {
   login: (credentials) => api.post('/auth/login/', credentials),
   register: (userData) => api.post('/auth/register/', userData),
   profile: () => api.get('/auth/profile/'),
-  updateProfile: (data) => api.put('/auth/profile/', data)
+  userProfile: (id) => api.get(`/auth/${id}/`),
+  userPosts: (id) => api.get(`/auth/${id}/posts/`),
+  updateProfile: (data) => api.put('/auth/profile/', data),
+  followUser: (id) => api.post(`/auth/${id}/follow/`),
+  unfollowUser: (id) => api.post(`/auth/${id}/unfollow/`)
 }
 
 // 帖子相关API
@@ -49,6 +59,7 @@ export const postAPI = {
   getPosts: () => api.get('/posts/'),
   createPost: (data) => api.post('/posts/', data),
   getPost: (id) => api.get(`/posts/${id}/`),
+  updatePost: (id, data) => api.put(`/posts/${id}/`, data),
   deletePost: (id) => api.delete(`/posts/${id}/`)
 }
 
