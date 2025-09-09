@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useMainStore } from '../store'
 import PostForm from '../components/PostForm.vue'
 import PostList from '../components/PostList.vue'
@@ -13,7 +13,7 @@ const loading = ref(false)
 onMounted(async () => {
   await loadPosts()
 })
-
+const posts = computed(() => store.posts)
 const loadPosts = async () => {
   try {
     loading.value = true
@@ -46,7 +46,7 @@ const loadPosts = async () => {
             <el-skeleton :rows="4" animated />
           </div>
           
-          <PostList v-else />
+          <PostList v-else :posts="posts" @post-deleted="loadPosts" />
         </el-card>
       </el-col>
     </el-row>
