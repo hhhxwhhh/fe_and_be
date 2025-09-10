@@ -24,7 +24,7 @@ const posts = computed(() => store.posts)
 const loadPosts = async () => {
   try {
     loading.value = true
-    const response = await postAPI.getPosts()
+    const response = await postAPI.getAllPosts()
     store.setPosts(response.data)
   } catch (error) {
     console.error('加载帖子失败:', error)

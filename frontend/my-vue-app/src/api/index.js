@@ -57,7 +57,8 @@ export const authAPI = {
 
 // 帖子相关API
 export const postAPI = {
-  getPosts: () => api.get('/posts/'),
+  getPosts: () => api.get('/posts/'),//获取关注的用户以及自己的帖子
+  getAllPosts: () => api.get('/posts/?all=true'),//获取所有人发的帖子
   createPost: (data) => api.post('/posts/', data),
   getPost: (id) => api.get(`/posts/${id}/`),
   updatePost: (id, data) => api.put(`/posts/${id}/`, data),

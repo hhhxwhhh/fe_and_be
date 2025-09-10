@@ -19,11 +19,13 @@ class PostListView(APIView):
     parser_classes = (MultiPartParser, FormParser)  # 添加解析器以处理文件上传
     
     def get(self,request):
-        if request.user.is_authenticated:
-            following_users=request.user.following.all()
+        show_all=request.query_params.get('all','false').lower()=='true'
+        if show_all:
+            posts=Post.objects.all()
+        elif request.user.is_authenticated:
+            following=request.user.following.all()
             posts=Post.objects.filter(
-                models.Q(author__in=following_users) |
-                models.Q(author=request.user)
+                models.Q(author__in=following) | models.Q(author=request.user)
             ).distinct()
         else:
             posts=Post.objects.all()
