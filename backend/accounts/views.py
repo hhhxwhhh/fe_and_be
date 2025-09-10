@@ -4,6 +4,7 @@ from rest_framework.decorators import api_view,permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from django.contrib.auth import authenticate
@@ -77,6 +78,8 @@ class UnFollowView(APIView):
             return Response({'error':'User not found'},status=status.HTTP_404_NOT_FOUND)
         
 class UpdateProfileView(APIView):
+    permission_classes=[IsAuthenticated]
+    parser_classes=[MultiPartParser,FormParser]
     def put(self,request):
         serializer=UserUpdateSerializer(request.user,data=request.data,partial=True)
         if serializer.is_valid():
@@ -87,6 +90,7 @@ class UpdateProfileView(APIView):
 
 class CurrentUserProfileView(APIView):
     permission_classes=[IsAuthenticated]
+    parser_classes=[MultiPartParser,FormParser]
     def get(self,request):
         serializer=UserSeralizers(request.user,context={'request':request})
         return Response(serializer.data)

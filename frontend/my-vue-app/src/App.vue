@@ -14,7 +14,6 @@ const activeIndex = ref('/')
 
 // 监听路由变化，更新激活的菜单项
 watch(() => route.path, (newPath) => {
-  // 处理动态路由，例如 /profile/1 应该激活 /profile
   if (newPath.startsWith('/profile/')) {
     activeIndex.value = '/profile'
   } else {
@@ -109,7 +108,7 @@ onMounted(async () => {
             <!-- 消息通知 -->
             <el-menu
               mode="horizontal"
-              @select="handleSelect"
+              @select="() => router.push('/notifications')"
               class="notification-menu"
             >
               <el-menu-item index="/notifications" class="notification-menu-item">
@@ -120,7 +119,7 @@ onMounted(async () => {
             <!-- 私信 -->
             <el-menu
               mode="horizontal"
-              @select="handleSelect"
+              @select="() => router.push('/messages')"
               class="message-menu"
             >
               <el-menu-item index="/messages" class="message-menu-item">
@@ -164,7 +163,7 @@ onMounted(async () => {
               
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item @click="handleSelect('/profile')">
+                  <el-dropdown-item @click="() => router.push(`/profile/${store.user.id}`)">
                     <el-icon><UserFilled /></el-icon>
                     个人资料
                   </el-dropdown-item>
