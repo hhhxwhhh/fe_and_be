@@ -86,7 +86,7 @@ class UpdateProfileView(APIView):
     
 
 class CurrentUserProfileView(APIView):
-    parser_classes=[IsAuthenticated]
+    permission_classes=[IsAuthenticated]
     def get(self,request):
         serializer=UserSeralizers(request.user,context={'request':request})
         return Response(serializer.data)

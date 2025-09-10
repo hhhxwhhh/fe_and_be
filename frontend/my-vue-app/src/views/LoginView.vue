@@ -21,12 +21,13 @@ const login = async () => {
     error.value = ''
     
     const response = await authAPI.login(form.value)
-    const { token, user } = response.data
+    const { access, user } = response.data
     
-    localStorage.setItem('token', token)
+    localStorage.setItem('token', access)
     store.setUser(user)
     
-    router.push('/')
+    // 登录成功后跳转到论坛页面
+    router.push('/forum')
   } catch (err) {
     error.value = err.response?.data?.detail || '登录失败'
   } finally {
@@ -36,8 +37,8 @@ const login = async () => {
 </script>
 
 <template>
-  <div class="login">
-    <div class="container">
+  <div class="auth-page">
+    <div class="auth-container">
       <h2>登录</h2>
       <form @submit.prevent="login">
         <div class="form-group">
@@ -73,40 +74,42 @@ const login = async () => {
         </button>
       </form>
       
-      <p>
-        还没有账户？ <router-link to="/register">注册</router-link>
+      <p class="switch-page">
+        还没有账户？ 
+        <router-link to="/register">立即注册</router-link>
       </p>
     </div>
   </div>
 </template>
 
 <style scoped>
-.login {
+.auth-page {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 70vh;
 }
 
-.container {
+.auth-container {
   width: 100%;
   max-width: 400px;
   padding: 2rem;
   border: 1px solid #ddd;
   border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
 
 .form-group {
   margin-bottom: 1rem;
 }
 
-label {
+.form-group label {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: bold;
 }
 
-input {
+.form-group input {
   width: 100%;
   padding: 0.5rem;
   border: 1px solid #ddd;
@@ -115,8 +118,7 @@ input {
 }
 
 .btn {
-  width: 100%;
-  padding: 0.75rem;
+  padding: 0.5rem 1rem;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -126,16 +128,38 @@ input {
 .btn-primary {
   background-color: #42b883;
   color: white;
+  width: 100%;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #359c6d;
 }
 
 .btn:disabled {
-  background-color: #aaa;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
 .error {
-  color: red;
+  color: #e74c3c;
   margin-bottom: 1rem;
+  padding: 0.5rem;
+  background-color: #fdf2f2;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+}
+
+.switch-page {
   text-align: center;
+  margin-top: 1rem;
+}
+
+.switch-page a {
+  color: #42b883;
+  text-decoration: none;
+}
+
+.switch-page a:hover {
+  text-decoration: underline;
 }
 </style>

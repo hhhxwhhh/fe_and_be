@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
+import ForumView from '../views/ForumView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import ProfileView from '../views/ProfileView.vue'
@@ -10,6 +11,11 @@ const routes = [
     path: '/',
     name: 'home',
     component: HomeView
+  },
+  {
+    path: '/forum',
+    name: 'forum',
+    component: ForumView
   },
   {
     path: '/login',
@@ -41,14 +47,17 @@ const router = createRouter({
 // 路由守卫
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
-  const publicPages = ['/login', '/register','/']
+  // 允许访问的公开页面
+  const publicPages = ['/login', '/register', '/']
   const authRequired = !publicPages.includes(to.path)
 
+  // 如果访问受保护的页面但未登录，则重定向到登录页
   if (authRequired && !token) {
     return next('/login')
   }
 
-  if (token && (to.path === '/login' || to.path === '/register')) {
+  // 如果已登录并尝试访问登录页，重定向到首页
+  if (token && to.path === '/login') {
     return next('/')
   }
 

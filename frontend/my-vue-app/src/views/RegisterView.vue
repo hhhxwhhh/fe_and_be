@@ -38,7 +38,8 @@ const register = async () => {
     localStorage.setItem('token', access)
     store.setUser(user)
     
-    router.push('/')
+    // 注册成功后跳转到论坛页面
+    router.push('/forum')
   } catch (err) {
     // 显示详细的错误信息
     if (err.response?.data) {
@@ -66,8 +67,8 @@ const register = async () => {
 </script>
 
 <template>
-  <div class="register">
-    <div class="register-form">
+  <div class="auth-page">
+    <div class="auth-container">
       <h2>用户注册</h2>
       
       <div v-if="error" class="error-message">
@@ -118,36 +119,35 @@ const register = async () => {
         <button 
           type="submit" 
           :disabled="loading"
-          class="submit-btn"
+          class="btn btn-primary"
         >
           {{ loading ? '注册中...' : '注册' }}
         </button>
       </form>
+      
+      <p class="switch-page">
+        已有账户？ 
+        <router-link to="/login">立即登录</router-link>
+      </p>
     </div>
   </div>
 </template>
 
 <style scoped>
-.register {
+.auth-page {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 70vh;
 }
 
-.register-form {
+.auth-container {
   width: 100%;
   max-width: 400px;
   padding: 2rem;
   border: 1px solid #ddd;
   border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.register-form h2 {
-  text-align: center;
-  margin-bottom: 1.5rem;
-  color: #333;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
 
 .form-group {
@@ -158,51 +158,59 @@ const register = async () => {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: bold;
-  color: #555;
 }
 
 .form-group input {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.5rem;
   border: 1px solid #ddd;
   border-radius: 4px;
-  font-size: 1rem;
   box-sizing: border-box;
 }
 
-.form-group input:focus {
-  outline: none;
-  border-color: #42b883;
-  box-shadow: 0 0 0 2px rgba(66, 184, 131, 0.2);
-}
-
-.submit-btn {
-  width: 100%;
-  padding: 0.75rem;
-  background-color: #42b883;
-  color: white;
+.btn {
+  padding: 0.5rem 1rem;
   border: none;
   border-radius: 4px;
-  font-size: 1rem;
   cursor: pointer;
-  transition: background-color 0.3s;
+  font-size: 1rem;
 }
 
-.submit-btn:hover:not(:disabled) {
+.btn-primary {
+  background-color: #42b883;
+  color: white;
+  width: 100%;
+}
+
+.btn-primary:hover:not(:disabled) {
   background-color: #359c6d;
 }
 
-.submit-btn:disabled {
-  background-color: #cccccc;
+.btn:disabled {
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
 .error-message {
-  padding: 1rem;
+  color: #e74c3c;
   margin-bottom: 1rem;
-  background-color: #ffecec;
-  color: #d8000c;
-  border: 1px solid #ffd2d2;
+  padding: 0.5rem;
+  background-color: #fdf2f2;
+  border: 1px solid #f5c6cb;
   border-radius: 4px;
+}
+
+.switch-page {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.switch-page a {
+  color: #42b883;
+  text-decoration: none;
+}
+
+.switch-page a:hover {
+  text-decoration: underline;
 }
 </style>

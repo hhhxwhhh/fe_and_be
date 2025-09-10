@@ -32,10 +32,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   response => response,
   error => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token')
-      window.location.href = '/login'
-    }
+    // 不再自动重定向到登录页面，让路由守卫处理
     return Promise.reject(error)
   }
 )
