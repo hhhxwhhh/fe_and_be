@@ -3,7 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useMainStore } from '../store'
 import PostForm from '../components/PostForm.vue'
 import PostList from '../components/PostList.vue'
-import HelloWorld from '../components/HelloWorld.vue'
+//import HelloWorld from '../components/HelloWorld.vue'
 import { postAPI } from '../api'
 import { ElRow, ElCol, ElCard, ElSkeleton } from 'element-plus'
 
