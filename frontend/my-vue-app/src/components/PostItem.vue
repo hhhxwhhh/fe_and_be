@@ -32,19 +32,24 @@ const toggleLike = async () => {
 }
 
 const addComment = async () => {
-  if (!newComment.value.trim()) return
-  
-  try {
-    await commentAPI.createComment(props.post.id, {
-      content: newComment.value
-    })
-    newComment.value = ''
-    // 重新加载帖子数据或更新状态
-  } catch (error) {
-    console.error('添加评论失败:', error)
+  if(!newComment.value.trim()){
+    return;
+  }
+  try{
+    const response = await commentAPI.createComment(
+      props.post.id,
+      {
+        content: newComment.value
+      })
+    newComment.value = '';
+    if(!props.post.comments){
+      props.post.comments = [];
+    }
+    store.addCommentToPost(props.post.id, response.data)
+    }catch(error){
+  console.error('添加评论失败:', error)
   }
 }
-
 const deletePost = async () => {
   if (confirm('确定要删除这个帖子吗？')) {
     try {
