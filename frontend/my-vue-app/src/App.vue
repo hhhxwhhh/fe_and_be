@@ -3,7 +3,7 @@ import { ref, watch, onMounted } from 'vue'
 import { RouterView, useRouter, useRoute } from 'vue-router'
 import { useMainStore } from './store'
 import { authAPI } from './api'
-import { ElContainer, ElHeader, ElMain, ElMenu, ElMenuItem, ElIcon, ElAvatar, ElDropdown, ElDropdownMenu, ElDropdownItem } from 'element-plus'
+import { ElContainer, ElHeader, ElMain, ElMenu, ElMenuItem, ElIcon, ElAvatar } from 'element-plus'
 import { HomeFilled, UserFilled, Edit, SwitchButton } from '@element-plus/icons-vue'
 
 const store = useMainStore()
@@ -73,59 +73,80 @@ onMounted(async () => {
 <template>
   <el-container id="app">
     <el-header>
-      <el-menu
-        :default-active="activeIndex"
-        mode="horizontal"
-        @select="handleSelect"
-        background-color="#42b883"
-        text-color="#fff"
-        active-text-color="#ffd04b"
-      >
-        <div class="nav-brand">
-          <h2>Social Network</h2>
+      <div class="header-container">
+        <div class="nav-left">
+          <div class="nav-brand">
+            <h2>Social Network</h2>
+          </div>
+          
+          <el-menu
+            :default-active="activeIndex"
+            mode="horizontal"
+            @select="handleSelect"
+            background-color="#42b883"
+            text-color="#fff"
+            active-text-color="#ffd04b"
+            class="nav-menu"
+          >
+            <el-menu-item index="/"> 
+              <el-icon><HomeFilled /></el-icon>
+              <span>首页</span>
+            </el-menu-item>
+            
+            <el-menu-item index="/forum">
+              <el-icon><Edit /></el-icon>
+              <span>论坛</span>
+            </el-menu-item>
+            
+            <el-menu-item index="/profile">
+              <el-icon><UserFilled /></el-icon>
+              <span>个人中心</span>
+            </el-menu-item>
+            
+          </el-menu>
         </div>
-        
-        <el-menu-item index="/"> 
-          <el-icon><HomeFilled /></el-icon>
-          <span>首页</span>
-        </el-menu-item>
-        
-        <el-menu-item v-if="store.user" index="/forum">
-          <el-icon><Edit /></el-icon>
-          <span>论坛</span>
-        </el-menu-item>
         
         <div class="nav-right">
           <template v-if="store.user">
-            <el-dropdown class="user-dropdown">
-              <div class="user-info">
-                <el-avatar :size="30" :src="store.user.avatar || ''">
-                  {{ store.user.username?.charAt(0)?.toUpperCase() }}
-                </el-avatar>
-                <span class="username">{{ store.user.username }}</span>
-              </div>
-              
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item @click="handleSelect('/profile')">
-                    <el-icon><UserFilled /></el-icon>
-                    个人资料
-                  </el-dropdown-item>
-                  <el-dropdown-item @click="logout">
-                    <el-icon><SwitchButton /></el-icon>
-                    退出登录
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
+            <div class="user-info" @click="handleSelect('/profile')">
+              <el-avatar :size="30" :src="store.user.avatar || ''">
+                {{ store.user.username?.charAt(0)?.toUpperCase() }}
+              </el-avatar>
+              <span class="username">{{ store.user.username }}</span>
+            </div>
+            <el-menu
+              mode="horizontal"
+              @select="handleSelect"
+              background-color="#42b883"
+              text-color="#fff"
+              active-text-color="#ffd04b"
+              class="user-menu"
+            >
+              <el-menu-item index="#" @click="logout">
+                退出
+              </el-menu-item>
+            </el-menu>
           </template>
           
           <template v-else>
-            <el-menu-item index="/login">登录</el-menu-item>
-            <el-menu-item index="/register">注册</el-menu-item>
+            <el-menu
+              mode="horizontal"
+              @select="handleSelect"
+              background-color="#42b883"
+              text-color="#fff"
+              active-text-color="#ffd04b"
+              class="auth-menu"
+            >
+              <el-menu-item index="/login">
+                登录
+              </el-menu-item>
+              <el-menu-item index="/register">
+                注册
+              </el-menu-item>
+            </el-menu>
           </template>
         </div>
-      </el-menu>
+      </div>
     </el-header>
     
     <el-main>
@@ -148,24 +169,71 @@ onMounted(async () => {
   box-shadow: 0 2px 4px rgba(0,0,0,.1);
 }
 
-.nav-brand {
-  float: left;
-  color: white;
-  margin-right: 2rem;
-  padding: 0 1rem;
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #42b883;
+  height: 50px;
+}
+
+.nav-left {
   display: flex;
   align-items: center;
+  height: 100%;
+}
+
+.nav-brand {
+  color: white;
+  padding: 0 1rem;
 }
 
 .nav-brand h2 {
   margin: 0;
 }
 
+.nav-menu {
+  display: flex;
+  align-items: center;
+  background-color: transparent !important;
+  border: none !important;
+}
+
+.nav-menu :deep(.el-menu-item) {
+  display: flex;
+  align-items: center;
+  height: 50px;
+  line-height: 50px;
+  margin: 0 5px;
+  border-bottom: none !important;
+}
+
+.nav-menu :deep(.el-menu-item.is-active) {
+  color: #ffd04b !important;
+}
+
 .nav-right {
-  float: right;
   display: flex;
   align-items: center;
   height: 100%;
+}
+
+.user-menu,
+.auth-menu {
+  display: flex;
+  align-items: center;
+  background-color: transparent !important;
+  border: none !important;
+}
+
+.user-menu :deep(.el-menu-item),
+.auth-menu :deep(.el-menu-item) {
+  display: flex;
+  align-items: center;
+  height: 50px;
+  line-height: 50px;
+  margin: 0 5px;
+  border-bottom: none !important;
 }
 
 .user-info {
@@ -185,16 +253,6 @@ onMounted(async () => {
 .username {
   margin-left: 8px;
   font-weight: 500;
-}
-
-:deep(.el-menu-item) {
-  display: flex;
-  align-items: center;
-}
-
-:deep(.el-menu--horizontal > .el-menu-item) {
-  height: 50px;
-  line-height: 50px;
 }
 
 @media (max-width: 768px) {
