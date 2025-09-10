@@ -18,13 +18,14 @@ const showComments = ref(false)
 
 const toggleLike = async () => {
   try {
-    if (props.post.is_liked) {
-      await likeAPI.unlikePost(props.post.id)
-    } else {
-      await likeAPI.likePost(props.post.id)
+    const response = await likeAPI.likePost(props.post.id);
+    props.post.is_liked=response.data.liked;
+    if(response.data.liked){
+      props.post.likes_count = (props.post.likes_count || 0)+1;
+    }else{
+      props.post.likes_count = Math.max(0, props.post.likes_count-1);
     }
-    // 重新加载帖子数据或更新状态
-    // 这里可以发送事件让父组件重新加载数据
+    store.toggleLike(props.post.id,response.data.liked);
   } catch (error) {
     console.error('点赞操作失败:', error)
   }

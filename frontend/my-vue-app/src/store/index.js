@@ -37,21 +37,9 @@ export const useMainStore = defineStore('main', {
     toggleLike(postId) {
       const post = this.posts.find(p => p.id === postId)
       if (post) {
-        if (!post.likes) {
-          post.likes = []
-        }
-        
-        const likeIndex = post.likes.findIndex(like => like.user === this.user.id)
-        if (likeIndex !== -1) {
-          // 取消点赞
-          post.likes.splice(likeIndex, 1)
-        } else {
-          // 添加点赞
-          post.likes.push({
-            user: this.user.id,
-            post: postId
-          })
-        }
+        // 更新点赞状态和计数
+        post.is_liked = !post.is_liked
+        post.likes_count = post.is_liked ? (post.likes_count || 0) + 1 : Math.max(0, (post.likes_count || 0) - 1)
       }
     }
   }
