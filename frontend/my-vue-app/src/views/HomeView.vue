@@ -57,6 +57,16 @@ const goToLogin = () => {
 const goToRegister = () => {
   router.push('/register')
 }
+
+// 新增：导航到关注流页面
+const goToFollowing = () => {
+  router.push('/following')
+}
+
+// 新增：导航到论坛页面
+const goToForum = () => {
+  router.push('/forum')
+}
 </script>
 
 <template>
@@ -76,7 +86,10 @@ const goToRegister = () => {
             
             <div class="hero-stats" v-else>
               <p>你好，{{ store.user.username }}！欢迎回到社区。</p>
-              <el-button type="primary" @click="() => router.push('/forum')">进入论坛</el-button>
+              <div class="user-navigation">
+                <el-button type="primary" @click="goToFollowing">查看关注</el-button>
+                <el-button type="success" @click="goToForum" style="margin-left: 10px;">进入论坛</el-button>
+              </div>
             </div>
           </div>
         </el-card>
@@ -167,9 +180,26 @@ const goToRegister = () => {
       </el-col>
     </el-row>
     
-    <!-- 社区特色 -->
-    <el-row justify="center">
-      <el-col :span="20">
+    <!-- 关注用户和社区特色 -->
+    <el-row justify="center" :gutter="20">
+      <el-col :span="12" v-if="store.user">
+        <el-card class="following-card">
+          <template #header>
+            <div class="card-header">
+              <span>我的关注</span>
+            </div>
+          </template>
+          
+          <div class="following-content">
+            <p>您当前关注了 <strong>{{ store.user.following_count || 0 }}</strong> 个用户</p>
+            <el-button type="primary" @click="goToFollowing" style="margin-top: 10px;">
+              查看关注用户的内容
+            </el-button>
+          </div>
+        </el-card>
+      </el-col>
+      
+      <el-col :span="store.user ? 8 : 20">
         <el-card class="features-card">
           <template #header>
             <div class="card-header">
@@ -248,9 +278,16 @@ const goToRegister = () => {
   margin-bottom: 1rem;
 }
 
+.user-navigation {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
 .stats-card,
 .preview-card,
-.features-card {
+.features-card,
+.following-card {
   margin-top: 2rem;
 }
 
@@ -308,6 +345,11 @@ const goToRegister = () => {
   color: #666;
 }
 
+.following-content {
+  text-align: center;
+  padding: 1rem;
+}
+
 .features-card .el-row {
   margin-top: 1rem;
 }
@@ -357,6 +399,20 @@ const goToRegister = () => {
   
   .stats-container .el-col:last-child {
     margin-bottom: 0;
+  }
+  
+  .user-navigation {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .el-row {
+    flex-direction: column;
+  }
+  
+  .el-col {
+    width: 100%;
+    margin-bottom: 20px;
   }
 }
 </style>

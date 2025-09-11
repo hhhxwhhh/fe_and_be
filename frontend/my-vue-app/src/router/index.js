@@ -7,6 +7,8 @@ import ProfileView from '../views/ProfileView.vue'
 import PostView from '../views/PostView.vue'
 import EditProfileView from '../views/EditProfileView.vue'
 import UserProfileView from '../views/UserProfileView.vue' //该页面用于显示其他的用户的个人信息
+import FollowingFeedView from '../views/FollowingFeedView.vue'
+
 
 const routes = [
   {
@@ -18,6 +20,11 @@ const routes = [
     path: '/forum',
     name: 'forum',
     component: ForumView
+  },
+  {
+    path: '/following',
+    name: 'following',
+    component: FollowingFeedView
   },
   {
     path: '/login',
