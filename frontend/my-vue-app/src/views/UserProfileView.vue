@@ -1,34 +1,66 @@
-<script setup>
+()<script setup>
 import { ref, onMounted } from 'vue'
 import { useMainStore } from '../store'
 import { authAPI } from '../api'
 import PostList from '../components/PostList.vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 const store = useMainStore()
+const route = useRoute()
 const router = useRouter()
 const user = ref(null)
 const userPosts = ref([])
 const loading = ref(true)
 
 onMounted(async () => {
-  try {
-    // 获取当前用户信息
-    const response = await authAPI.profile()
-    user.value = response.data
-    store.setUser(user.value)
-    userPosts.value = user.value.posts || []
-  } catch (error) {
-    console.error('获取用户信息失败:', error)
-  } finally {
-    loading.value = false
-  }
+  await loadUserProfile()
 })
 
-const editProfile = () => {
-  // 跳转到编辑个人资料页面
-  router.push('/edit-profile')
+const loadUserProfile = async () => {
+  try {
+    loading.value=true;
+    const userId = route.params.id;
+    const response = await authAPI.userProfile(userId);
+    user.value=response.data;
+    userPosts.value=user.value.posets || [];
+  } catch (error) {
+    console.error('获取用户信息失败:', error)
+  }finally {
+    loading.value=false;
+  }
 }
+
+const followUser = async () => {
+  try {
+    await authAPI.followUser(user.value.id);
+    user.value.is_following = true;
+    user.value.followers_count += 1;
+
+    if (store.user && store.user.id === user.id){
+      store.user.is_following = true;
+      store.user.followers_count += 1;
+    }
+  } catch(error){
+    console.error('关注用户失败:', error)
+  }
+}
+
+const unfollowUser = async () => {
+  try {
+    await authAPI.unfollowUser(user.value.id);
+    user.value.is_following = false;
+    user.value.followers_count -= 1;
+    if(store.user && store.user.id === user.id){
+      store.user.is_following = false;
+      store.user.followers_count -= 1;
+    }
+  } catch (error) {
+    console.error('取消关注失败:', error)
+  }
+}
+
+
+
 </script>
 
 <template>
@@ -49,7 +81,22 @@ const editProfile = () => {
           <div class="user-info-section">
             <div class="username-actions">
               <h1>{{ user.username }}</h1>
-              <button class="edit-button" @click="editProfile">编辑资料</button>
+              <div v-if="store.user && store.user.id !== user.id" class="follow-actions">
+                <button 
+                  v-if="!user.is_following" 
+                  class="follow-button" 
+                  @click="followUser"
+                >
+                  关注
+                </button>
+                <button 
+                  v-else 
+                  class="unfollow-button" 
+                  @click="unfollowUser"
+                >
+                  取消关注
+                </button>
+              </div>
             </div>
             
             <div class="stats">
@@ -80,7 +127,7 @@ const editProfile = () => {
         </div>
         
         <div class="user-posts">
-          <h2>个人帖子</h2>
+          <h2>帖子</h2>
           <PostList :posts="userPosts" @post-deleted="userPosts = userPosts.filter(p => p.id !== $event)" />
         </div>
       </div>
@@ -103,12 +150,12 @@ const editProfile = () => {
 
 .profile-header {
   display: flex;
-  padding: 1.5rem;
+  padding: 2rem;
   border-bottom: 1px solid #eee;
 }
 
 .avatar-section {
-  margin-right: 1.5rem;
+  margin-right: 2rem;
 }
 
 .avatar {
@@ -116,13 +163,13 @@ const editProfile = () => {
   height: 100px;
   border-radius: 50%;
   overflow: hidden;
+  background-color: #f0f0f0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #42b883;
-  color: white;
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: bold;
+  color: #666;
 }
 
 .avatar img {
@@ -144,20 +191,24 @@ const editProfile = () => {
 
 .username-actions h1 {
   margin: 0;
-  font-size: 1.8rem;
 }
 
-.edit-button {
-  padding: 0.4rem 1rem;
-  background-color: #f0f0f0;
-  border: 1px solid #ddd;
+.follow-button, .unfollow-button {
+  padding: 0.5rem 1rem;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-weight: bold;
 }
 
-.edit-button:hover {
-  background-color: #e0e0e0;
+.follow-button {
+  background-color: #42b883;
+  color: white;
+}
+
+.unfollow-button {
+  background-color: #f0f0f0;
+  color: #333;
 }
 
 .stats {
@@ -166,37 +217,31 @@ const editProfile = () => {
 }
 
 .stat-item {
-  margin-right: 1.5rem;
+  margin-right: 2rem;
+  text-align: center;
 }
 
 .stat-number {
-  font-weight: bold;
+  display: block;
   font-size: 1.2rem;
-  margin-right: 0.3rem;
+  font-weight: bold;
 }
 
 .stat-label {
+  font-size: 0.9rem;
   color: #666;
 }
 
-.user-details .bio {
-  margin: 0.5rem 0;
-  line-height: 1.4;
-}
-
 .user-details p {
-  margin: 0.3rem 0;
-  color: #333;
+  margin: 0.5rem 0;
 }
 
 .user-posts {
-  padding: 1.5rem;
+  padding: 2rem;
 }
 
 .user-posts h2 {
   margin-top: 0;
-  margin-bottom: 1rem;
-  color: #333;
 }
 
 .loading {

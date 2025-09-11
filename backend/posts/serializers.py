@@ -12,14 +12,16 @@ class CommentSeralizers(serializers.ModelSerializer):
 
 class PostSeralizers(serializers.ModelSerializer):
     author=serializers.StringRelatedField(read_only=True)
+    author_id=serializers.IntegerField(source='author.id',read_only=True)
     comments=CommentSeralizers(many=True,read_only=True)
     likes_count=serializers.SerializerMethodField()
     is_liked=serializers.SerializerMethodField()
+    is_following=serializers.SerializerMethodField()
 
     class Meta:
         model=Post
-        fields=('id','author','content','image','created_at','updated_at','comments','likes_count','is_liked')
-        read_only_fields=('id','author','created_at','updated_at')
+        fields=('id','author','author_id','is_following','content','image','created_at','updated_at','comments','likes_count','is_liked')
+        read_only_fields=('id','author','created_at','updated_at','author_id')
 
     def get_likes_count(self,obj):
         return obj.likes.count()
@@ -28,3 +30,7 @@ class PostSeralizers(serializers.ModelSerializer):
         if request and hasattr(request,'user') and request.user.is_authenticated:
             return obj.likes.filter(user=request.user).exists()
         return False
+    def get_is_following(self,obj):
+        request =self.context.get('request');
+        if request and hasattr(request,'user') and request.user.is_authenticated:
+            return request.user.following.filter(id=obj.author.id).exists()

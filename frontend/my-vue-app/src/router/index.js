@@ -6,6 +6,7 @@ import RegisterView from '../views/RegisterView.vue'
 import ProfileView from '../views/ProfileView.vue'
 import PostView from '../views/PostView.vue'
 import EditProfileView from '../views/EditProfileView.vue'
+import UserProfileView from '../views/UserProfileView.vue' //该页面用于显示其他的用户的个人信息
 
 const routes = [
   {
@@ -32,6 +33,11 @@ const routes = [
     path: '/profile/:id?',
     name: 'profile',
     component: ProfileView
+  },
+  {
+    path: '/user-profile/:id',
+    name: 'user-profile',
+    component: UserProfileView
   },
   {
     path: '/edit-profile',
