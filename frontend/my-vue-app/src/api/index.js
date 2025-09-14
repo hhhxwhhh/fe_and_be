@@ -1,7 +1,11 @@
 import axios from 'axios'
 
+const API_BASE_URL=process.env.NODE_ENV === 'production'
+? 'http://backend:8000/api' // Docker 环境中的后端服务名
+: 'http://localhost:8000/api'; // 本地开发环境
+
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL: API_BASE_URL,
   timeout: 10000
 })
 
