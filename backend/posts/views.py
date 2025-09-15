@@ -5,6 +5,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Post, Comment
+from interactions.models import Like, Notification
 from .serializers import PostSeralizers, CommentSeralizers
 from interactions.models import Like
 from django.contrib.auth import get_user_model
@@ -99,8 +100,17 @@ class CommentView(APIView):
             post = Post.objects.get(pk=pk)
             serializer = CommentSeralizers(data=request.data)
             if serializer.is_valid():
-                serializer.save(author=request.user, post=post)
+                comment = serializer.save(author=request.user, post=post)
+                if post.author != request.user:
+                    Notification.objects.create(
+                        recipient=post.author,
+                        actor=request.user,
+                        notification_type="comment",
+                        post=post,
+                        comment=comment.content,
+                    )
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
+
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Post.DoesNotExist:
             return Response(
@@ -136,6 +146,13 @@ class LikeView(APIView):
             if not created:
                 like.delete()
                 return Response({"message": "Unliked", "liked": False})
+            if post.author != request.user:
+                Notification.objects.create(
+                    recipient=post.author,
+                    actor=request.user,
+                    notification_type="like",
+                    post=post,
+                )
             return Response({"message": "Liked", "liked": True})
         except Post.DoesNotExist:
             return Response(

@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework import status
-from rest_framework.decorators import api_view,permission_classes
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -8,106 +8,142 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from django.contrib.auth import authenticate
-from .serializers import UserSeralizers, UserRegistrationSerializer, UserUpdateSerializer
+from .serializers import (
+    UserSeralizers,
+    UserRegistrationSerializer,
+    UserUpdateSerializer,
+)
 from posts.models import Post
 from posts.serializers import PostSeralizers
+from interactions.models import Notification
+
 # Create your views here.
-User=get_user_model()
+User = get_user_model()
+
 
 class RegisterView(APIView):
-    permission_classes=[AllowAny]
+    permission_classes = [AllowAny]
 
-    def post(self,request):
-        serializer=UserRegistrationSerializer(data=request.data)
+    def post(self, request):
+        serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
-            user=serializer.save()
-            refresh=RefreshToken.for_user(user)
-            return Response({
-                'refresh':str(refresh),
-                'access':str(refresh.access_token),
-                'user':UserSeralizers(user,context={'request':request}).data
-            },status=status.HTTP_201_CREATED)
+            user = serializer.save()
+            refresh = RefreshToken.for_user(user)
+            return Response(
+                {
+                    "refresh": str(refresh),
+                    "access": str(refresh.access_token),
+                    "user": UserSeralizers(user, context={"request": request}).data,
+                },
+                status=status.HTTP_201_CREATED,
+            )
         # 返回详细的错误信息
-        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
-    
-class LoginView(APIView):
-    permission_classes=[AllowAny]
-    
-    def post(self,request):
-        email=request.data.get('email')
-        password=request.data.get('password')
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        user=authenticate(request=request,email=email,password=password)
+
+class LoginView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get("email")
+        password = request.data.get("password")
+
+        user = authenticate(request=request, email=email, password=password)
         if user is not None:
-            refresh=RefreshToken.for_user(user)
-            return Response({
-                'refresh':str(refresh),
-                'access':str(refresh.access_token),
-                'user':UserSeralizers(user,context={'request':request}).data
-            })
-        return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-    
+            refresh = RefreshToken.for_user(user)
+            return Response(
+                {
+                    "refresh": str(refresh),
+                    "access": str(refresh.access_token),
+                    "user": UserSeralizers(user, context={"request": request}).data,
+                }
+            )
+        return Response(
+            {"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED
+        )
+
+
 class UserProfileView(APIView):
-    def get(self,request,pk):
+    def get(self, request, pk):
         try:
-            user=User.objects.get(pk=pk)
-            serializer=UserSeralizers(user,context={'request':request})
+            user = User.objects.get(pk=pk)
+            serializer = UserSeralizers(user, context={"request": request})
             return Response(serializer.data)
         except User.DoesNotExist:
-            return Response({'error':'User not found'},status=status.HTTP_404_NOT_FOUND)
-        
+            return Response(
+                {"error": "User not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
 
 class FollowView(APIView):
-    def post(self,request,pk):
+    def post(self, request, pk):
         try:
-            user_to_follow=User.objects.get(pk=pk)
-            if user_to_follow==request.user:
-                return Response({'error':'You cannot follow yourself'},status=status.HTTP_400_BAD_REQUEST)
+            user_to_follow = User.objects.get(pk=pk)
+            if user_to_follow == request.user:
+                return Response(
+                    {"error": "You cannot follow yourself"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             request.user.following.add(user_to_follow)
-            return Response({'message': f'You are now following {user_to_follow.username}'})
+            Notification.objects.create(
+                recipient=user_to_follow, actor=request.user, notification_type="follow"
+            )
+            return Response(
+                {"message": f"You are now following {user_to_follow.username}"}
+            )
         except User.DoesNotExist:
-            return Response({'error':'User not found'},status=status.HTTP_404_NOT_FOUND)
-        
+            return Response(
+                {"error": "User not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+
 class UnFollowView(APIView):
-    def post(self,request,pk):
+    def post(self, request, pk):
         try:
-            user_to_unfollow=User.objects.get(pk=pk)
+            user_to_unfollow = User.objects.get(pk=pk)
             request.user.following.remove(user_to_unfollow)
-            return Response({'message': f'You are no longer following {user_to_unfollow.username}'})
+            return Response(
+                {"message": f"You are no longer following {user_to_unfollow.username}"}
+            )
         except User.DoesNotExist:
-            return Response({'error':'User not found'},status=status.HTTP_404_NOT_FOUND)
-        
+            return Response(
+                {"error": "User not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+
 class UpdateProfileView(APIView):
-    permission_classes=[IsAuthenticated]
-    parser_classes=[MultiPartParser,FormParser]
-    def put(self,request):
-        serializer=UserUpdateSerializer(request.user,data=request.data,partial=True)
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def put(self, request):
+        serializer = UserUpdateSerializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response(UserSeralizers(request.user,context={'request':request}).data)
-        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
-    
+            return Response(
+                UserSeralizers(request.user, context={"request": request}).data
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class CurrentUserProfileView(APIView):
-    permission_classes=[IsAuthenticated]
-    parser_classes=[MultiPartParser,FormParser]
-    def get(self,request):
-        serializer=UserSeralizers(request.user,context={'request':request})
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get(self, request):
+        serializer = UserSeralizers(request.user, context={"request": request})
         return Response(serializer.data)
-    
-    def put(self,request):
-        serializer=UserUpdateSerializer(request.user,data=request.data,partial=True)
+
+    def put(self, request):
+        serializer = UserUpdateSerializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response(UserSeralizers(request.user,context={'request':request}).data)
-        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                UserSeralizers(request.user, context={"request": request}).data
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
-@api_view(['GET'])
+@api_view(["GET"])
 @permission_classes([AllowAny])
 def hello_world(request):
-    return Response({
-        'message':'hello from django backend',
-        'status':'success'
-    })
+    return Response({"message": "hello from django backend", "status": "success"})
