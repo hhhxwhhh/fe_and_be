@@ -76,3 +76,10 @@ export const likeAPI = {
   likePost: (postId) => api.post(`/posts/${postId}/like/`),
   unlikePost: (postId) => api.delete(`/posts/${postId}/like/`)
 }
+
+export const notificationAPI = {
+  getNotifications: () => api.get('/notifications/'),
+  markAsRead: (id) => api.post(`/notifications/${id}/read/`),
+  markAllAsRead: () => api.post('/notifications/read-all/'),
+  getUnreadCount: () => api.get('/notifications/unread-count/')
+}
