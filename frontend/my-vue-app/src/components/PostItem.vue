@@ -67,8 +67,10 @@ const followUser = async (userId) => {
   try {
     await authAPI.followUser(userId);
     props.post.is_following = true;
+    // 更新当前用户 
     if(store.user && store.user.id === userId){
       store.user.is_following = true;
+      store.user.follwoing_count += 1;
     }
   } catch(error){
     console.error('关注用户失败:', error)
@@ -81,6 +83,7 @@ const unfollowUser = async (userId) => {
     props.post.is_following = false;
     if(store.user && store.user.id === userId){
       store.user.is_following = false;
+      store.user.followers_count -= 1;
     }
   } catch(error){
     console.error('取消关注失败:', error)
@@ -88,7 +91,11 @@ const unfollowUser = async (userId) => {
 }
 
 const goToUserProfile = (userId) => {
-  router.push(`/profile/${userId}`)
+  if(store.user &&store.user.id==userId){
+    router.push(`/profile`)
+  }else{
+    router.push(`/profile/${userId}`)
+  }
 }
 
 </script>

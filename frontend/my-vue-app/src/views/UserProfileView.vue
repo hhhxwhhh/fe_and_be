@@ -22,7 +22,9 @@ const loadUserProfile = async () => {
     const userId = route.params.id;
     const response = await authAPI.userProfile(userId);
     user.value=response.data;
-    userPosts.value=user.value.posets || [];
+    // 获取用户帖子
+    const postsResponse = await authAPI.userPosts(userId);
+    userPosts.value = postsResponse.data||[];
   } catch (error) {
     console.error('获取用户信息失败:', error)
   }finally {

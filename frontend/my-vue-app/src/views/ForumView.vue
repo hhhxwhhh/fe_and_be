@@ -24,7 +24,13 @@ const posts = computed(() => store.posts)
 const loadPosts = async () => {
   try {
     loading.value = true
-    const response = await postAPI.getAllPosts()
+    // 根据用户是否登录决定获取哪种帖子
+    let response;
+    if (store.user) {
+      response = await postAPI.getPosts(); // 获取关注用户和自己的帖子
+    } else {
+      response = await postAPI.getAllPosts(); // 获取所有帖子
+    }
     store.setPosts(response.data)
   } catch (error) {
     console.error('加载帖子失败:', error)
