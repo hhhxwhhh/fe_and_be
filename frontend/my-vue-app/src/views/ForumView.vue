@@ -24,13 +24,8 @@ const posts = computed(() => store.posts)
 const loadPosts = async () => {
   try {
     loading.value = true
-    // 根据用户是否登录决定获取哪种帖子
-    let response;
-    if (store.user) {
-      response = await postAPI.getPosts(); // 获取关注用户和自己的帖子
-    } else {
-      response = await postAPI.getAllPosts(); // 获取所有帖子
-    }
+    // 在论坛页面，无论用户是否登录，都显示所有帖子
+    const response = await postAPI.getAllPosts(); 
     store.setPosts(response.data)
   } catch (error) {
     console.error('加载帖子失败:', error)

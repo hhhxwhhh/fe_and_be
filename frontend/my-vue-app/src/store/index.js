@@ -80,7 +80,7 @@ export const useMainStore = defineStore('main', {
       }
     },
 
-    async fetchUnreadNOtificationCount() { 
+    async fetchUnreadNotificationCount() { 
       try{
         const response = await notificationAPI.getUnreadCount();
         this.unreadNotificationCount = response.data.count;

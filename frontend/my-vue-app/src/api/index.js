@@ -78,8 +78,8 @@ export const likeAPI = {
 }
 
 export const notificationAPI = {
-  getNotifications: () => api.get('/notifications/'),
-  markAsRead: (id) => api.post(`/notifications/${id}/read/`),
-  markAllAsRead: () => api.post('/notifications/read-all/'),
-  getUnreadCount: () => api.get('/notifications/unread-count/')
+  getNotifications: () => api.get('/interactions/notifications/'),
+  markAsRead: (id) => api.post(`/interactions/notifications/${id}/read/`),
+  markAllAsRead: () => api.post('/interactions/notifications/read-all/'),
+  getUnreadCount: () => api.get('/interactions/notifications/unread-count/')
 }

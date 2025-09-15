@@ -7,7 +7,7 @@ User = get_user_model()
 
 class NotificationSerializer(serializers.ModelSerializer):
     actor = serializers.StringRelatedField(read_only=True)
-    post_cotent = serializers.SerializerMethodField()
+    post_content = serializers.SerializerMethodField()
 
     class Meta:
         model = Notification

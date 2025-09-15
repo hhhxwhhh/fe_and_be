@@ -117,10 +117,10 @@ class CommentView(APIView):
                 {"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
-    def delete(self, request, pk, common_pk):
+    def delete(self, request, pk, comment_pk):
         try:
             post = Post.objects.get(pk=pk)
-            comment = Comment.objects.get(pk=common_pk)
+            comment = Comment.objects.get(pk=comment_pk)
             if comment.author != request.user:
                 return Response(
                     {"error": "You do not have permission to delete this comment"},

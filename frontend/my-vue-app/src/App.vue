@@ -4,8 +4,8 @@ import { RouterView, useRouter, useRoute } from 'vue-router'
 import { useMainStore } from './store'
 import { authAPI } from './api'
 import { ElContainer, ElHeader, ElMain, ElMenu, ElMenuItem, ElIcon, ElAvatar, ElDropdown, ElDropdownMenu, ElDropdownItem } from 'element-plus'
-import { HomeFilled, UserFilled, Edit, SwitchButton, Bell, ChatDotRound, SetUp, More } from '@element-plus/icons-vue'
-
+import { HomeFilled, UserFilled, Edit, SwitchButton, Bell } from '@element-plus/icons-vue'
+import NotificationBell from './components/NotificationBell.vue'
 const store = useMainStore()
 const router = useRouter()
 const route = useRoute()
@@ -66,6 +66,11 @@ onMounted(async () => {
       localStorage.removeItem('token')
     }
   }
+  
+  // 如果用户已登录，获取未读通知数
+  if (store.user) {
+    store.fetchUnreadNotificationsCount()
+  }
 })
 </script>
 
@@ -87,17 +92,17 @@ onMounted(async () => {
           >
             <el-menu-item index="/"> 
               <el-icon><HomeFilled /></el-icon>
-              <span>首页</span>
+              <span class="menu-text">首页</span>
             </el-menu-item>
             
             <el-menu-item index="/forum">
               <el-icon><Edit /></el-icon>
-              <span>论坛</span>
+              <span class="menu-text">论坛</span>
             </el-menu-item>
             
             <el-menu-item index="/profile">
               <el-icon><UserFilled /></el-icon>
-              <span>个人中心</span>
+              <span class="menu-text">个人中心</span>
             </el-menu-item>
           </el-menu>
         </div>
@@ -106,51 +111,7 @@ onMounted(async () => {
         <div class="nav-right">
           <template v-if="store.user">
             <!-- 消息通知 -->
-            <el-menu
-              mode="horizontal"
-              @select="() => router.push('/notifications')"
-              class="notification-menu"
-            >
-              <el-menu-item index="/notifications" class="notification-menu-item">
-                <el-icon><Bell /></el-icon>
-              </el-menu-item>
-            </el-menu>
-            
-            <!-- 私信 -->
-            <el-menu
-              mode="horizontal"
-              @select="() => router.push('/messages')"
-              class="message-menu"
-            >
-              <el-menu-item index="/messages" class="message-menu-item">
-                <el-icon><ChatDotRound /></el-icon>
-              </el-menu-item>
-            </el-menu>
-            
-            <!-- 更多选项 -->
-            <el-dropdown class="more-dropdown">
-              <el-menu
-                mode="horizontal"
-                class="more-menu"
-              >
-                <el-menu-item class="more-menu-item">
-                  <el-icon><More /></el-icon>
-                </el-menu-item>
-              </el-menu>
-              
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item @click="$router.push('/favorites')">
-                    <el-icon><Star /></el-icon>
-                    收藏
-                  </el-dropdown-item>
-                  <el-dropdown-item @click="$router.push('/settings')">
-                    <el-icon><SetUp /></el-icon>
-                    设置
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
+            <NotificationBell />
             
             <!-- 用户菜单 -->
             <el-dropdown class="user-dropdown">
@@ -227,6 +188,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  flex: 1;
 }
 
 .nav-brand {
@@ -245,6 +207,7 @@ onMounted(async () => {
   align-items: center;
   background-color: transparent !important;
   border: none !important;
+  flex: 1;
 }
 
 .nav-menu :deep(.el-menu-item) {
@@ -255,6 +218,7 @@ onMounted(async () => {
   margin: 0 5px;
   border-bottom: none !important;
   color: white !important;
+  padding: 0 15px !important;
 }
 
 .nav-menu :deep(.el-menu-item.is-active) {
@@ -272,9 +236,6 @@ onMounted(async () => {
   flex-shrink: 0;
 }
 
-.notification-menu,
-.message-menu,
-.more-menu,
 .auth-menu {
   display: flex;
   align-items: center;
@@ -282,9 +243,6 @@ onMounted(async () => {
   border: none !important;
 }
 
-.notification-menu :deep(.el-menu-item),
-.message-menu :deep(.el-menu-item),
-.more-menu :deep(.el-menu-item),
 .auth-menu :deep(.el-menu-item) {
   display: flex;
   align-items: center;
@@ -295,14 +253,10 @@ onMounted(async () => {
   color: white !important;
 }
 
-.notification-menu :deep(.el-menu-item:hover),
-.message-menu :deep(.el-menu-item:hover),
-.more-menu :deep(.el-menu-item:hover),
 .auth-menu :deep(.el-menu-item:hover) {
   background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-.more-dropdown,
 .user-dropdown {
   height: 100%;
 }
@@ -330,6 +284,10 @@ onMounted(async () => {
   white-space: nowrap;
 }
 
+.menu-text {
+  margin-left: 5px;
+}
+
 @media (max-width: 768px) {
   .nav-brand h2 {
     font-size: 1rem;
@@ -339,17 +297,24 @@ onMounted(async () => {
     display: none;
   }
   
-  .nav-menu :deep(.el-menu-item span) {
-    display: none;
+  .menu-text {
+    display: inline !important;
   }
   
   .nav-menu :deep(.el-menu-item .el-icon) {
     margin-right: 0;
   }
   
-  .notification-menu :deep(.el-menu-item span),
-  .message-menu :deep(.el-menu-item span) {
+  .nav-menu :deep(.el-menu-item) {
+    padding: 0 10px !important;
+  }
+  
+  .nav-menu :deep(.el-menu-item span) {
     display: none;
+  }
+  
+  .nav-menu :deep(.el-menu-item .menu-text) {
+    display: inline !important;
   }
 }
 </style>
