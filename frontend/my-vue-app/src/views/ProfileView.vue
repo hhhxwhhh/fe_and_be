@@ -29,6 +29,14 @@ const editProfile = () => {
   // 跳转到编辑个人资料页面
   router.push('/edit-profile')
 }
+const handlePostDeleted = async (postId) => { 
+  userPosts.value=userPosts.value.filter(post => post.id !== postId)
+
+  if(store.user&&store.user.posts){
+    store.user.posts=store.user.posts.filter(post => post.id !== postId)
+  }
+}
+
 </script>
 
 <template>
@@ -81,7 +89,7 @@ const editProfile = () => {
         
         <div class="user-posts">
           <h2>个人帖子</h2>
-          <PostList :posts="userPosts" @post-deleted="userPosts = userPosts.filter(p => p.id !== $event)" />
+          <PostList :posts="userPosts" @post-deleted="handlePostDeleted" />
         </div>
       </div>
     </div>

@@ -1,11 +1,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useMainStore } from '../store'
 import { postAPI } from '../api'
 import PostItem from '../components/PostItem.vue'
 
 const route = useRoute()
+const router= useRouter();
 const store = useMainStore()
 const post = ref(null)
 const loading = ref(true)
@@ -20,6 +21,11 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+const handlePostDeleted = () => {
+  router.push('/')
+}
+
 </script>
 
 <template>
@@ -29,7 +35,7 @@ onMounted(async () => {
         加载中...
       </div>
       <div v-else-if="post">
-        <PostItem :post="post" @post-deleted="$router.push('/')" />
+        <PostItem :post="post" @post-deleted="handlePostDeleted" />
       </div>
       <div v-else>
         <p>找不到该帖子</p>

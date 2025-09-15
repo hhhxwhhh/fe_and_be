@@ -61,6 +61,9 @@ const unfollowUser = async () => {
   }
 }
 
+const handlePostDeleted = async ()=>{
+  userPosts.value=userPosts.value.filter(post => post.id !== post.id)
+}
 
 
 </script>
@@ -130,7 +133,7 @@ const unfollowUser = async () => {
         
         <div class="user-posts">
           <h2>帖子</h2>
-          <PostList :posts="userPosts" @post-deleted="userPosts = userPosts.filter(p => p.id !== $event)" />
+          <PostList :posts="userPosts" @post-deleted="handlePostDeleted" />
         </div>
       </div>
     </div>

@@ -55,6 +55,11 @@ const formatDate = (dateString) => {
     minute: '2-digit'
   })
 }
+
+const handlePostDeleted =async () => {
+  await loadPosts();
+  calculateStats();
+}
 </script>
 
 <template>
@@ -109,7 +114,7 @@ const formatDate = (dateString) => {
             <div class="posts-summary">
               <p>共有 {{ posts.length }} 篇帖子，最新帖子发布于 {{ formatDate(posts[0].created_at) }}</p>
             </div>
-            <PostList :posts="posts" @post-deleted="loadPosts" />
+            <PostList :posts="posts" @post-deleted="handlePostDeleted" />
           </div>
           
           <div v-else class="no-posts">

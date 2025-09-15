@@ -55,10 +55,11 @@ const addComment = async () => {
 const deletePost = async () => {
   if (confirm('确定要删除这个帖子吗？')) {
     try {
-      await postAPI.deletePost(props.post.id)
-      emit('postDeleted', props.post.id)
+      await postAPI.deletePost(props.post.id);
+      emit('postDeleted', props.post.id);
     } catch (error) {
-      console.error('删除帖子失败:', error)
+      console.error('删除帖子失败:', error);
+      alert('删除帖子失败');
     }
   }
 }
