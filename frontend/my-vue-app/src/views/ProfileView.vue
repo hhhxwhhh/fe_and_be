@@ -90,41 +90,73 @@ const handlePostDeleted = async (postId) => {
                   <div class="stat-label">关注</div>
                 </div>
               </div>
+              
+              <div class="user-bio" v-if="user.bio">
+                <p>{{ user.bio }}</p>
+              </div>
             </div>
           </div>
         </div>
         
         <!-- 用户详细信息 -->
-        <el-card class="user-details-card">
-          <div class="user-details">
-            <el-row :gutter="20">
-              <el-col :span="24">
-                <div class="detail-item" v-if="user.bio">
-                  <h3>个人简介</h3>
-                  <p class="bio">{{ user.bio }}</p>
+        <div class="user-details-section">
+          <el-row :gutter="30">
+            <el-col :span="16">
+              <el-card class="info-card">
+                <div class="card-header">
+                  <h3>个人信息</h3>
                 </div>
-                
-                <div class="detail-item">
-                  <h3>联系信息</h3>
-                  <div class="contact-info">
-                    <p class="email">
-                      <i class="el-icon-message"></i>
-                      <span>{{ user.email }}</span>
-                    </p>
-                    <p v-if="user.birth_date" class="birth-date">
-                      <i class="el-icon-date"></i>
-                      <span>{{ user.birth_date }}</span>
-                    </p>
+                <div class="card-content">
+                  <div class="info-item">
+                    <i class="el-icon-message"></i>
+                    <div class="info-text">
+                      <span class="info-label">邮箱</span>
+                      <span class="info-value">{{ user.email }}</span>
+                    </div>
+                  </div>
+                  <div class="info-item" v-if="user.birth_date">
+                    <i class="el-icon-date"></i>
+                    <div class="info-text">
+                      <span class="info-label">生日</span>
+                      <span class="info-value">{{ user.birth_date }}</span>
+                    </div>
                   </div>
                 </div>
-              </el-col>
-            </el-row>
-          </div>
-        </el-card>
+              </el-card>
+            </el-col>
+            
+            <el-col :span="8">
+              <el-card class="stats-card">
+                <div class="card-header">
+                  <h3>统计信息</h3>
+                </div>
+                <div class="card-content">
+                  <div class="stats-grid">
+                    <div class="stat-box">
+                      <div class="stat-value">{{ user.posts?.length || 0 }}</div>
+                      <div class="stat-label">帖子</div>
+                    </div>
+                    <div class="stat-box">
+                      <div class="stat-value">{{ user.followers_count || 0 }}</div>
+                      <div class="stat-label">粉丝</div>
+                    </div>
+                    <div class="stat-box">
+                      <div class="stat-value">{{ user.following_count || 0 }}</div>
+                      <div class="stat-label">关注</div>
+                    </div>
+                  </div>
+                </div>
+              </el-card>
+            </el-col>
+          </el-row>
+        </div>
         
         <!-- 用户帖子 -->
         <div class="user-posts">
-          <h2 class="section-title">个人帖子</h2>
+          <div class="section-header">
+            <h2 class="section-title">个人帖子</h2>
+            <div class="section-divider"></div>
+          </div>
           <PostList :posts="userPosts" @post-deleted="handlePostDeleted" />
         </div>
       </div>
@@ -140,27 +172,38 @@ const handlePostDeleted = async (postId) => {
 }
 
 .profile-container {
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 0 1rem;
 }
 
 .profile-content {
-  border-radius: 16px;
+  border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
 }
 
 /* 头部样式 */
 .profile-header {
   position: relative;
-  height: 300px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  height: 350px;
+  background: linear-gradient(120deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   overflow: hidden;
+}
+
+.profile-header::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+  transform: rotate(30deg);
 }
 
 .header-overlay {
@@ -175,28 +218,29 @@ const handlePostDeleted = async (postId) => {
 .header-content {
   position: relative;
   width: 100%;
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 0 3rem;
   display: flex;
   align-items: center;
   z-index: 2;
 }
 
 .avatar-section {
-  margin-right: 2rem;
+  margin-right: 3rem;
 }
 
 .avatar-ring {
-  width: 140px;
-  height: 140px;
+  width: 160px;
+  height: 160px;
   border-radius: 50%;
   background: linear-gradient(135deg, #ffd700, #ff8c00);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 5px;
-  animation: rotate 8s linear infinite;
+  padding: 6px;
+  animation: rotate 10s linear infinite;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 .avatar-wrapper {
@@ -208,8 +252,8 @@ const handlePostDeleted = async (postId) => {
 }
 
 .avatar {
-  width: 130px;
-  height: 130px;
+  width: 148px;
+  height: 148px;
   border-radius: 50%;
   overflow: hidden;
   display: flex;
@@ -217,9 +261,9 @@ const handlePostDeleted = async (postId) => {
   justify-content: center;
   background-color: white;
   color: #42b883;
-  font-size: 3rem;
+  font-size: 3.5rem;
   font-weight: bold;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
 .avatar img {
@@ -237,32 +281,34 @@ const handlePostDeleted = async (postId) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .username {
   margin: 0;
-  font-size: 2.5rem;
+  font-size: 2.8rem;
   font-weight: 700;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .edit-button {
-  padding: 12px 24px;
-  font-size: 1rem;
+  padding: 12px 30px;
+  font-size: 1.1rem;
   font-weight: 500;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s ease;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
 }
 
 .edit-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
 }
 
 .user-stats {
   display: flex;
-  gap: 2rem;
+  gap: 3rem;
+  margin-bottom: 1.5rem;
 }
 
 .stat-item {
@@ -270,110 +316,174 @@ const handlePostDeleted = async (postId) => {
 }
 
 .stat-value {
-  font-size: 2rem;
+  font-size: 2.2rem;
   font-weight: 700;
   margin-bottom: 0.3rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .stat-label {
-  font-size: 1rem;
+  font-size: 1.1rem;
+  opacity: 0.9;
+  letter-spacing: 0.5px;
+}
+
+.user-bio {
+  max-width: 80%;
+  font-size: 1.2rem;
+  line-height: 1.6;
   opacity: 0.9;
 }
 
-/* 用户详细信息卡片 */
-.user-details-card {
-  margin: -40px 2rem 2rem;
-  border-radius: 12px;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-  border: none;
-  overflow: hidden;
-  position: relative;
+.user-bio p {
+  margin: 0;
 }
 
-.user-details-card :deep(.el-card__body) {
-  padding: 1.8rem;
+/* 用户详细信息区域 */
+.user-details-section {
+  padding: 2.5rem 3rem 1rem;
 }
 
-.detail-item {
+.card-header {
   margin-bottom: 1.5rem;
 }
 
-.detail-item:last-child {
-  margin-bottom: 0;
-}
-
-.detail-item h3 {
-  margin: 0 0 1rem 0;
-  font-size: 1.3rem;
-  color: #333;
+.card-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
   font-weight: 600;
+  color: #333;
   position: relative;
-  padding-bottom: 0.5rem;
+  padding-bottom: 0.8rem;
 }
 
-.detail-item h3::after {
+.card-header h3::after {
   content: '';
   position: absolute;
   bottom: 0;
   left: 0;
-  width: 40px;
+  width: 50px;
   height: 3px;
   background: linear-gradient(90deg, #667eea, #764ba2);
   border-radius: 2px;
 }
 
-.bio {
-  font-size: 1.1rem;
-  line-height: 1.6;
-  color: #555;
-  margin: 0;
+.info-card, .stats-card {
+  border-radius: 15px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
+  border: none;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  margin-bottom: 1.5rem;
 }
 
-.contact-info p {
+.info-card:hover, .stats-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+}
+
+.info-card :deep(.el-card__body), 
+.stats-card :deep(.el-card__body) {
+  padding: 1.8rem;
+}
+
+.info-item {
   display: flex;
   align-items: center;
-  margin: 0.8rem 0;
-  font-size: 1.1rem;
-  color: #555;
+  padding: 1rem 0;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.contact-info i {
-  margin-right: 10px;
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.info-item i {
+  font-size: 1.5rem;
   color: #667eea;
-  font-size: 1.2rem;
+  margin-right: 1rem;
+  width: 30px;
+  text-align: center;
+}
+
+.info-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-label {
+  font-size: 0.9rem;
+  color: #999;
+  margin-bottom: 0.2rem;
+}
+
+.info-value {
+  font-size: 1.1rem;
+  color: #333;
+  font-weight: 500;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.stat-box {
+  text-align: center;
+  padding: 1.2rem 0;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+  transition: all 0.3s ease;
+}
+
+.stat-box:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #667eea;
+  margin-bottom: 0.3rem;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
 }
 
 /* 帖子部分 */
 .user-posts {
-  padding: 0 2rem 2rem;
+  padding: 0 3rem 3rem;
+}
+
+.section-header {
+  margin: 2rem 0 1.5rem;
 }
 
 .section-title {
   font-size: 1.8rem;
   color: #333;
-  margin: 2rem 0 1.5rem;
+  margin: 0 0 1rem;
   font-weight: 600;
-  position: relative;
-  padding-bottom: 0.8rem;
 }
 
-.section-title::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
+.section-divider {
+  height: 3px;
   width: 60px;
-  height: 4px;
   background: linear-gradient(90deg, #667eea, #764ba2);
   border-radius: 2px;
 }
 
 /* 加载状态 */
 .loading {
-  padding: 2rem;
+  padding: 3rem;
   background: white;
-  border-radius: 16px;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   margin: 20px;
 }
 
@@ -388,6 +498,35 @@ const handlePostDeleted = async (postId) => {
 }
 
 /* 响应式设计 */
+@media (max-width: 992px) {
+  .header-content {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .avatar-section {
+    margin-right: 0;
+    margin-bottom: 2rem;
+  }
+  
+  .username-actions {
+    justify-content: center;
+  }
+  
+  .user-stats {
+    justify-content: center;
+  }
+  
+  .user-bio {
+    max-width: 100%;
+    text-align: center;
+  }
+  
+  .user-details-section {
+    padding: 2rem;
+  }
+}
+
 @media (max-width: 768px) {
   .profile-header {
     height: auto;
@@ -395,61 +534,57 @@ const handlePostDeleted = async (postId) => {
   }
   
   .header-content {
-    flex-direction: column;
-    text-align: center;
-    padding: 1rem;
-  }
-  
-  .avatar-section {
-    margin-right: 0;
-    margin-bottom: 1.5rem;
+    padding: 1.5rem;
   }
   
   .avatar-ring {
-    width: 120px;
-    height: 120px;
+    width: 130px;
+    height: 130px;
   }
   
   .avatar {
-    width: 110px;
-    height: 110px;
-    font-size: 2.5rem;
-  }
-  
-  .username-actions {
-    flex-direction: column;
-    gap: 1rem;
+    width: 118px;
+    height: 118px;
+    font-size: 2.8rem;
   }
   
   .username {
-    font-size: 2rem;
+    font-size: 2.2rem;
   }
   
   .user-stats {
-    justify-content: center;
+    gap: 1.5rem;
   }
   
-  .user-details-card {
-    margin: -60px 1rem 1.5rem;
+  .stat-value {
+    font-size: 1.8rem;
+  }
+  
+  .user-details-section {
+    padding: 1.5rem;
   }
   
   .user-posts {
-    padding: 0 1rem 1.5rem;
+    padding: 0 1.5rem 2rem;
   }
   
-  .section-title {
-    font-size: 1.5rem;
-    text-align: center;
+  .stats-grid {
+    grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 576px) {
   .profile-container {
     padding: 0 0.5rem;
   }
   
-  .header-content {
-    padding: 1rem 0.5rem;
+  .username {
+    font-size: 1.8rem;
+  }
+  
+  .edit-button {
+    padding: 10px 20px;
+    font-size: 1rem;
   }
   
   .user-stats {
@@ -464,12 +599,14 @@ const handlePostDeleted = async (postId) => {
     font-size: 0.9rem;
   }
   
-  .user-details-card :deep(.el-card__body) {
-    padding: 1.2rem;
+  .info-item {
+    flex-direction: column;
+    text-align: center;
   }
   
-  .contact-info p {
-    font-size: 1rem;
+  .info-item i {
+    margin-right: 0;
+    margin-bottom: 0.5rem;
   }
 }
 </style>
