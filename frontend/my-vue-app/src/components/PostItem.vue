@@ -119,7 +119,7 @@ const goToUserProfile = (userId) => {
             @click="unfollowUser(post.author_id)"
             class="unfollow-button"
           >
-            取消关注
+            已关注
           </button>
         </div>
       </div>
@@ -134,22 +134,32 @@ const goToUserProfile = (userId) => {
     </div>
     
     <div class="post-actions">
-      <button @click="toggleLike" :class="{ liked: post.is_liked }">
-        {{ post.is_liked ? '取消点赞' : '点赞' }} ({{ post.likes_count }})
+      <button @click="toggleLike" :class="{ liked: post.is_liked }" class="action-button">
+        <span class="heart-icon" :class="{ filled: post.is_liked }">❤</span>
+        {{ post.likes_count }}
       </button>
-      <button @click="showComments = !showComments">
-        {{ showComments ? '隐藏评论' : '显示评论' }}
+      <button @click="showComments = !showComments" class="action-button">
+        <span class="comment-icon">💬</span>
+        {{ post.comments ? post.comments.length : 0 }}
       </button>
-      <button v-if="store.user && store.user.id === post.author_id" @click="deletePost">
-        删除
+      <button v-if="store.user && store.user.id === post.author_id" @click="deletePost" class="action-button delete-button">
+        <span class="delete-icon">🗑</span>
       </button>
     </div>
     
     <div v-if="showComments" class="post-comments">
       <div class="comments-list">
         <div v-for="comment in post.comments" :key="comment.id" class="comment">
-          <strong>{{ comment.author }}:</strong>
-          <span>{{ comment.content }}</span>
+          <div class="comment-header">
+            <strong>{{ comment.author }}</strong>
+            <span class="comment-date">{{ new Date(comment.created_at).toLocaleDateString() }}</span>
+          </div>
+          <div class="comment-content">
+            {{ comment.content }}
+          </div>
+        </div>
+        <div v-if="!post.comments || post.comments.length === 0" class="no-comments">
+          暂无评论，来抢沙发吧！
         </div>
       </div>
       
@@ -158,8 +168,9 @@ const goToUserProfile = (userId) => {
           v-model="newComment" 
           placeholder="添加评论..." 
           @keyup.enter="addComment"
+          class="comment-input"
         />
-        <button @click="addComment">发布</button>
+        <button @click="addComment" class="comment-button">发布</button>
       </div>
     </div>
   </div>
@@ -167,124 +178,256 @@ const goToUserProfile = (userId) => {
 
 <style scoped>
 .post-item {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(145deg, #ffffff, #f8f9fa);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.post-item:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
 }
 
 .post-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #eee;
 }
 
 .post-author {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .author-link {
   margin: 0;
   cursor: pointer;
-  color: #42b883;
+  color: #2c3e50;
+  font-weight: 600;
+  font-size: 1.1rem;
+  transition: color 0.2s;
 }
 
 .author-link:hover {
-  text-decoration: underline;
+  color: #42b883;
 }
 
 .follow-button, .unfollow-button {
-  padding: 0.25rem 0.5rem;
+  padding: 0.4rem 0.8rem;
   border: none;
-  border-radius: 4px;
+  border-radius: 20px;
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s;
 }
 
 .follow-button {
-  background-color: #42b883;
+  background: linear-gradient(45deg, #42b883, #3498db);
   color: white;
+  box-shadow: 0 2px 6px rgba(66, 184, 131, 0.3);
+}
+
+.follow-button:hover {
+  background: linear-gradient(45deg, #3aa876, #2980b9);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(66, 184, 131, 0.4);
 }
 
 .unfollow-button {
-  background-color: #f0f0f0;
-  color: #333;
+  background: #f1f2f6;
+  color: #6c757d;
+  border: 1px solid #e2e6ea;
+}
+
+.unfollow-button:hover {
+  background: #e2e6ea;
 }
 
 .post-date {
-  color: #999;
-  font-size: 0.9rem;
+  color: #8d99ae;
+  font-size: 0.85rem;
 }
 
 .post-content p {
-  margin: 0.5rem 0;
+  margin: 1rem 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #343a40;
+}
+
+.post-image {
+  margin: 1rem 0;
 }
 
 .post-image img {
   max-width: 100%;
-  border-radius: 4px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .post-actions {
   display: flex;
   gap: 1rem;
-  margin-top: 1rem;
-}
-
-.post-actions button {
-  padding: 0.25rem 0.5rem;
-  border: 1px solid #ddd;
-  background: white;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.post-actions button:hover {
-  background: #f5f5f5;
-}
-
-.post-actions button.liked {
-  background: #42b883;
-  color: white;
-  border-color: #42b883;
-}
-
-.post-comments {
-  margin-top: 1rem;
+  margin-top: 1.5rem;
   padding-top: 1rem;
   border-top: 1px solid #eee;
 }
 
+.action-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  background: #f8f9fa;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+  color: #495057;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.action-button:hover {
+  background: #e9ecef;
+  transform: translateY(-1px);
+}
+
+.action-button.liked {
+  background: #fff5f5;
+  color: #e74c3c;
+}
+
+.heart-icon {
+  transition: transform 0.2s;
+}
+
+.heart-icon.filled {
+  transform: scale(1.2);
+}
+
+.delete-button {
+  margin-left: auto;
+  background: #fff5f5;
+  color: #e74c3c;
+}
+
+.delete-button:hover {
+  background: #ffecec;
+}
+
+.post-comments {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #eee;
+}
+
+.comments-list {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+  padding-right: 0.5rem;
+}
+
 .comment {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
   margin-bottom: 0.5rem;
-  padding: 0.5rem;
-  background: #f9f9f9;
-  border-radius: 4px;
+}
+
+.comment-header strong {
+  color: #2c3e50;
+}
+
+.comment-date {
+  font-size: 0.75rem;
+  color: #8d99ae;
+}
+
+.comment-content {
+  color: #495057;
+  line-height: 1.5;
+}
+
+.no-comments {
+  text-align: center;
+  color: #8d99ae;
+  font-style: italic;
+  padding: 1rem;
 }
 
 .add-comment {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
   margin-top: 1rem;
 }
 
-.add-comment input {
+.comment-input {
   flex: 1;
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  border: 1px solid #dee2e6;
+  border-radius: 20px;
+  transition: border-color 0.2s;
+  font-size: 0.95rem;
 }
 
-.add-comment button {
-  padding: 0.5rem 1rem;
-  background: #42b883;
+.comment-input:focus {
+  outline: none;
+  border-color: #42b883;
+  box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.1);
+}
+
+.comment-button {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(45deg, #42b883, #3498db);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 20px;
   cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+  box-shadow: 0 2px 6px rgba(66, 184, 131, 0.3);
+}
+
+.comment-button:hover {
+  background: linear-gradient(45deg, #3aa876, #2980b9);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(66, 184, 131, 0.4);
+}
+
+/* 滚动条样式 */
+.comments-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.comments-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.comments-list::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 10px;
+}
+
+.comments-list::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
 }
 </style>
