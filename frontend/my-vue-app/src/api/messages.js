@@ -32,22 +32,22 @@ api.interceptors.request.use(
 
 // 获取对话列表
 export const getConversations = () => {
-  return api.get('/conversations/')
+  return api.get('/messages/conversations/')
 }
 
 // 获取与特定用户的对话
 export const getMessages = (userId) => {
-  return api.get(`/messages/${userId}/`)
+  return api.get(`/messages/messages/${userId}/`)
 }
 
 // 发送消息
 export const sendMessage = (messageData) => {
-  return api.post('/messages/', messageData)
+  return api.post('/messages/messages/', messageData)
 }
 
 // 标记消息为已读
 export const markAsRead = (messageId) => {
-  return api.patch(`/messages/${messageId}/read/`)
+  return api.patch(`/messages/messages/${messageId}/read/`)
 }
 
 export default {

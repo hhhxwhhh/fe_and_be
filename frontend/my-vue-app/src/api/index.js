@@ -45,7 +45,6 @@ api.interceptors.response.use(
   }
 )
 
-
 export {
   messageAPI
 }
@@ -58,7 +57,7 @@ export const authAPI = {
   register: (userData) => api.post('/auth/register/', userData),
   profile: () => api.get('/auth/profile/'),  // 获取当前用户资料
   userProfile: (id) => api.get(`/auth/${id}/`),  // 获取指定用户资料
-  userPosts: (id) => api.get(`/auth/${id}/posts/`),  // 获取用户帖子
+  userPosts: (id) => api.get(`/posts/user/${id}/`),  // 获取用户帖子
   updateProfile: (data) => api.put('/auth/profile/', data,{
     headers: {
       'Content-Type': 'multipart/form-data'
@@ -74,6 +73,7 @@ export const postAPI = {
   getAllPosts: () => api.get('/posts/?all=true'),//获取所有人发的帖子
   createPost: (data) => api.post('/posts/', data),
   getPost: (id) => api.get(`/posts/${id}/`),
+  getUserPosts: (userId) => api.get(`/posts/user/${userId}/`), // 获取特定用户的帖子
   updatePost: (id, data) => api.put(`/posts/${id}/`, data),
   deletePost: (id) => api.delete(`/posts/${id}/`)
 }

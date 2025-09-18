@@ -28,6 +28,12 @@ onMounted(async () => {
         : messages.value[0].sender)
     : null
   
+  // 如果还没有recipient信息，我们需要从路由参数中获取
+  if (!recipient.value) {
+    // 这里可以调用API获取用户信息
+    // 为简化起见，我们暂时使用userId作为标识
+  }
+  
   loading.value = false
   
   // 滚动到最新消息
@@ -72,6 +78,14 @@ const handleNewMessage = async (content) => {
         </div>
         <div class="recipient-name">{{ recipient.username }}</div>
       </div>
+      <div v-else class="recipient-info">
+        <div class="recipient-avatar">
+          <div class="avatar-placeholder">
+            U
+          </div>
+        </div>
+        <div class="recipient-name">用户 {{ route.params.userId }}</div>
+      </div>
     </div>
     
     <div v-if="loading" class="loading">加载中...</div>
@@ -96,6 +110,8 @@ const handleNewMessage = async (content) => {
     </div>
   </div>
 </template>
+
+<!-- ... styles remain the same ... -->
 
 <style scoped>
 .conversation-page {

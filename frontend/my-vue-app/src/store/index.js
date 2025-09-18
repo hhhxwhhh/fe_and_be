@@ -109,37 +109,18 @@ export const useMainStore = defineStore('main', {
         }
       } catch (error) {
         console.error('Error fetching conversation:', error)
-      }
-    },
-    
-
-    async sendMessage(recipientId, content) {
-      try {
-        const response = await messageAPI.sendMessage({
-          recipient: recipientId,
-          content
-        })
-        
-        // 如果当前正在查看这个用户的对话，则添加新消息
-        if (this.currentConversation && this.currentConversation.userId === recipientId) {
-          this.currentConversation.messages.push(response.data)
+        // 如果获取对话失败，初始化一个空的对话
+        this.currentConversation = {
+          userId,
+          messages: []
         }
-        
-        return response.data
-      } catch (error) {
-        console.error('Error sending message:', error)
-        throw error
       }
     },
 
-    async markMessageAsRead(messageId) {
-      try {
-        await messageAPI.markAsRead(messageId)
-      } catch (error) {
-        console.error('Error marking message as read:', error)
-      }
-    }
-  },
 
+
+  }
+
+    
 
 })

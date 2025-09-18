@@ -5,17 +5,15 @@ from rest_framework.decorators import api_view, permission_classes
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from .models import Message
-from .models import User
+from accounts.models import User
 from .serializers import UserSerializer, MessageSerializer, MessageCreateSerializer
-
-# Create your views here.
 
 
 class IsParticipant(permissions.BasePermission):
     """只有聊天的成员才能访问"""
 
     def has_object_permission(self, request, view, obj):
-        return obj.sender == request.user or obj.receiver == request.user
+        return obj.sender == request.user or obj.recipient == request.user
 
 
 class MessageListView(generics.ListCreateAPIView):
@@ -45,7 +43,7 @@ def conversation_list(request):
     """获取当前用户的所有对话"""
     user = request.user
     sent_messages = Message.objects.filter(sender=user)
-    received_messages = Message.objects.filter(receiver=user)
+    received_messages = Message.objects.filter(recipient=user)
 
     # 构建对话的列表
     conversations = {}
@@ -54,7 +52,7 @@ def conversation_list(request):
         recipient_id = msg.recipient.id
         if (
             recipient_id not in conversations
-            or msg.timestamp > conversations[recipient_id]["timstamp"]
+            or msg.timestamp > conversations[recipient_id]["timestamp"]
         ):
             conversations[recipient_id] = {
                 "user": msg.recipient,
@@ -101,14 +99,18 @@ def conversation_list(request):
             }
         )
 
+    # 添加调试信息
+    print(f"User: {user.username}")
+    print(f"Conversations result: {result}")
+
     return Response(result)
 
 
 @api_view(["PATCH"])
 @permission_classes([permissions.IsAuthenticated])
-def mark_as_read(request, messagd_id):
+def mark_as_read(request, message_id):
     """处理消息，转换为已读"""
-    message = get_object_or_404(Message, id=messagd_id, recipient=request.user)
+    message = get_object_or_404(Message, id=message_id, recipient=request.user)
     message.is_read = True
     message.save()
     return Response({"status": "message marked as read"})

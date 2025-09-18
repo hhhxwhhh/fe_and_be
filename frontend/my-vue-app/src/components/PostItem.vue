@@ -91,12 +91,11 @@ const unfollowUser = async (userId) => {
   }
 }
 
+
+
 const goToUserProfile = (userId) => {
-  if(store.user &&store.user.id==userId){
-    router.push(`/profile`)
-  }else{
-    router.push(`/profile/${userId}`)
-  }
+
+  router.push(`/user-profile/${userId}`)
 }
 
 </script>
