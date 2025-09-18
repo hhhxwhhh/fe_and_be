@@ -27,6 +27,7 @@ urlpatterns = [
     path("api/posts/", include("posts.urls")),
     path("api/interactions/", include("interactions.urls")),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("api/messages/", include("messages.urls")),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
