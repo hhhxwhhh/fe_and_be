@@ -11,11 +11,11 @@ let notificationInterval = null
 
 onMounted(async () => {
   if (store.user) {
-    await store.fetchUnreadNotificationsCount()
+    await store.fetchUnreadNotificationCount()
     
     // 每30秒检查一次新通知
     notificationInterval = setInterval(() => {
-      store.fetchUnreadNotificationsCount()
+      store.fetchUnreadNotificationCount()
     }, 30000)
   }
 })

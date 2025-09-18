@@ -27,27 +27,27 @@ const openConversation = (userId) => {
     <div class="conversations-list">
       <div 
         v-for="conversation in conversations" 
-        :key="conversation.user.id"
+        :key="conversation.user?.id || conversation.id"
         class="conversation-item"
-        @click="openConversation(conversation.user.id)"
+        @click="openConversation(conversation.user?.id)"
       >
         <div class="user-avatar">
           <img 
-            v-if="conversation.user.avatar" 
+            v-if="conversation.user?.avatar" 
             :src="conversation.user.avatar" 
-            :alt="conversation.user.username"
+            :alt="conversation.user?.username"
           >
           <div v-else class="avatar-placeholder">
-            {{ conversation.user.username.charAt(0).toUpperCase() }}
+            {{ conversation.user?.username?.charAt(0).toUpperCase() || 'U' }}
           </div>
         </div>
         <div class="conversation-info">
-          <div class="user-name">{{ conversation.user.username }}</div>
-          <div class="last-message">{{ conversation.last_message.content }}</div>
+          <div class="user-name">{{ conversation.user?.username || '未知用户' }}</div>
+          <div class="last-message">{{ conversation.last_message?.content || '无消息' }}</div>
         </div>
         <div class="conversation-meta">
           <div class="timestamp">
-            {{ new Date(conversation.last_message.timestamp).toLocaleDateString() }}
+            {{ new Date(conversation.last_message?.timestamp || Date.now()).toLocaleDateString() }}
           </div>
           <div v-if="conversation.unread_count > 0" class="unread-count">
             {{ conversation.unread_count }}

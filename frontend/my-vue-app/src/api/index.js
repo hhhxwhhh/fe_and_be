@@ -33,10 +33,18 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   response => response,
   error => {
+    // 检查是否是401未授权错误
+    if (error.response && error.response.status === 401) {
+      // 清除本地存储的令牌
+      localStorage.removeItem('token')
+      // 可以在这里添加重定向到登录页面的逻辑，或者让路由守卫处理
+      console.log('认证已过期，请重新登录')
+    }
     // 不再自动重定向到登录页面，让路由守卫处理
     return Promise.reject(error)
   }
 )
+
 
 export {
   messageAPI

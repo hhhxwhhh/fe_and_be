@@ -66,7 +66,9 @@ onMounted(async () => {
       store.setUser(response.data)
     } catch (error) {
       // 如果获取用户信息失败，清除无效token
+      console.error('获取用户信息失败，清除无效token')
       localStorage.removeItem('token')
+      store.setUser(null)
     }
   }
   
