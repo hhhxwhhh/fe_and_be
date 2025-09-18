@@ -171,11 +171,11 @@ const handleNewMessage = async (content) => {
 }
 
 .message-wrapper {
+  display: flex;
   margin-bottom: 15px;
 }
 
 .message-wrapper.own-message {
-  display: flex;
   justify-content: flex-end;
 }
 

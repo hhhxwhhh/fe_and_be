@@ -12,7 +12,10 @@ defineProps({
 </script>
 
 <template>
-  <div class="message-item">
+  <div 
+    class="message-item"
+    :class="{ 'own': message.sender.id === currentUserId }"
+  >
     <div class="message-content">
       {{ message.content }}
     </div>

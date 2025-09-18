@@ -4,7 +4,7 @@ import { RouterView, useRouter, useRoute } from 'vue-router'
 import { useMainStore } from './store'
 import { authAPI } from './api'
 import { ElContainer, ElHeader, ElMain, ElMenu, ElMenuItem, ElIcon, ElAvatar, ElDropdown, ElDropdownMenu, ElDropdownItem } from 'element-plus'
-import { HomeFilled, UserFilled, Edit, SwitchButton, Bell } from '@element-plus/icons-vue'
+import { HomeFilled, UserFilled, Edit, SwitchButton, Bell, ChatDotRound } from '@element-plus/icons-vue'
 import NotificationBell from './components/NotificationBell.vue'
 const store = useMainStore()
 const router = useRouter()
@@ -30,6 +30,9 @@ const handleSelect = (key) => {
       break
     case '/forum':
       router.push('/forum')
+      break
+    case '/messages':
+      router.push('/messages')
       break
     case '/login':
       router.push('/login')
@@ -69,7 +72,7 @@ onMounted(async () => {
   
   // 如果用户已登录，获取未读通知数
   if (store.user) {
-    store.fetchUnreadNotificationsCount()
+    store.fetchUnreadNotificationCount()
   }
 })
 </script>
@@ -112,6 +115,11 @@ onMounted(async () => {
           <template v-if="store.user">
             <!-- 消息通知 -->
             <NotificationBell />
+            
+            <!-- 私信入口 -->
+            <div class="messages-icon" @click="() => router.push('/messages')">
+              <el-icon><ChatDotRound /></el-icon>
+            </div>
             
             <!-- 用户菜单 -->
             <el-dropdown class="user-dropdown">
@@ -257,6 +265,21 @@ onMounted(async () => {
   background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
+.messages-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 15px;
+  cursor: pointer;
+  color: white;
+  font-size: 18px;
+}
+
+.messages-icon:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
 .user-dropdown {
   height: 100%;
 }
@@ -315,6 +338,10 @@ onMounted(async () => {
   
   .nav-menu :deep(.el-menu-item .menu-text) {
     display: inline !important;
+  }
+  
+  .messages-icon {
+    padding: 0 10px;
   }
 }
 </style>
