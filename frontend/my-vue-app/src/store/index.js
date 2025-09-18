@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { authAPI, postAPI, commentAPI, likeAPI,notificationAPI } from '../api'
+import { authAPI, postAPI, commentAPI, likeAPI,notificationAPI,messageAPI } from '../api'
 
 export const useMainStore = defineStore('main', {
   state: () => ({
@@ -7,7 +7,9 @@ export const useMainStore = defineStore('main', {
     posts: [],
     currentPost: null,
     notifications: [],
-    unreadNotificationCount: 0
+    unreadNotificationCount: 0,
+    conversations: [],
+    currentConversation: null
   }),
   
   actions: {
@@ -88,5 +90,56 @@ export const useMainStore = defineStore('main', {
         console.error('Error fetching unread notification count:', error);
       }
     },
-  }
+
+    async fetchConversations() {
+      try {
+        const response = await messageAPI.getConversations()
+        this.conversations = response.data
+      } catch (error) {
+        console.error('Error fetching conversations:', error)
+      }
+    },
+
+    async fetchConversation(userId) {
+      try {
+        const response = await messageAPI.getMessages(userId)
+        this.currentConversation = {
+          userId,
+          messages: response.data
+        }
+      } catch (error) {
+        console.error('Error fetching conversation:', error)
+      }
+    },
+    
+
+    async sendMessage(recipientId, content) {
+      try {
+        const response = await messageAPI.sendMessage({
+          recipient: recipientId,
+          content
+        })
+        
+        // 如果当前正在查看这个用户的对话，则添加新消息
+        if (this.currentConversation && this.currentConversation.userId === recipientId) {
+          this.currentConversation.messages.push(response.data)
+        }
+        
+        return response.data
+      } catch (error) {
+        console.error('Error sending message:', error)
+        throw error
+      }
+    },
+
+    async markMessageAsRead(messageId) {
+      try {
+        await messageAPI.markAsRead(messageId)
+      } catch (error) {
+        console.error('Error marking message as read:', error)
+      }
+    }
+  },
+
+
 })

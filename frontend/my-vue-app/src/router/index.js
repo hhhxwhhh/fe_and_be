@@ -6,9 +6,10 @@ import RegisterView from '../views/RegisterView.vue'
 import ProfileView from '../views/ProfileView.vue'
 import PostView from '../views/PostView.vue'
 import EditProfileView from '../views/EditProfileView.vue'
-import UserProfileView from '../views/UserProfileView.vue' //该页面用于显示其他的用户的个人信息
+import UserProfileView from '../views/UserProfileView.vue'
 import FollowingFeedView from '../views/FollowingFeedView.vue'
-
+import MessagesView from '../views/MessagesView.vue'  
+import ConversationView from '../views/ConversationView.vue' 
 
 const routes = [
   {
@@ -55,6 +56,16 @@ const routes = [
     path: '/post/:id',
     name: 'post',
     component: PostView
+  },
+  {
+    path: '/messages',  
+    name: 'messages',
+    component: MessagesView
+  },
+  {
+    path: '/messages/:userId',  
+    name: 'conversation',
+    component: ConversationView
   }
 ]
 
