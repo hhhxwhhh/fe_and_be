@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMainStore } from '../store'
 import { authAPI } from '../api'
-import { ElForm, ElFormItem, ElInput, ElButton, ElUpload, ElMessage } from 'element-plus'
+import { ElForm, ElFormItem, ElInput, ElButton, ElUpload, ElMessage, ElCard } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 
 const store = useMainStore()
@@ -89,133 +89,385 @@ const cancel = () => {
 
 <template>
   <div class="edit-profile">
-    <div class="container">
-      <h1>编辑个人资料</h1>
+    <div class="profile-container">
+      <div class="header-section">
+        <h1>编辑个人资料</h1>
+        <p>更新您的个人信息，让其他人更好地了解您</p>
+      </div>
       
-      <el-form 
-        :model="form" 
-        label-position="top" 
-        class="profile-form"
-      >
-        <div class="avatar-upload">
-          <el-upload
-            class="avatar-uploader"
-            action=""
-            :show-file-list="false"
-            :before-upload="beforeAvatarUpload"
-            :auto-upload="false"
-            :on-change="handleAvatarSuccess"
-          >
-            <img v-if="avatarUrl" :src="avatarUrl" class="avatar" />
-            <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
-          </el-upload>
-          <p class="avatar-tip">点击上传头像</p>
-        </div>
-        
-        <el-form-item label="用户名">
-          <el-input v-model="form.username" />
-        </el-form-item>
-        
-        <el-form-item label="邮箱">
-          <el-input v-model="form.email" type="email" />
-        </el-form-item>
-        
-        <el-form-item label="生日">
-          <el-input v-model="form.birth_date" type="date" />
-        </el-form-item>
-        
-        <el-form-item label="个人简介">
-          <el-input 
-            v-model="form.bio" 
-            type="textarea" 
-            :rows="4"
-            placeholder="介绍一下自己..."
-          />
-        </el-form-item>
-        
-        <div class="form-actions">
-          <el-button @click="cancel">取消</el-button>
-          <el-button 
-            type="primary" 
-            @click="submitForm" 
-            :loading="loading"
-          >
-            保存
-          </el-button>
-        </div>
-      </el-form>
+      <el-card class="profile-card">
+        <el-form 
+          :model="form" 
+          label-position="top" 
+          class="profile-form"
+        >
+          <div class="form-section">
+            <h2>基本信息</h2>
+            <div class="avatar-upload-section">
+              <div class="avatar-upload">
+                <el-upload
+                  class="avatar-uploader"
+                  action=""
+                  :show-file-list="false"
+                  :before-upload="beforeAvatarUpload"
+                  :auto-upload="false"
+                  :on-change="handleAvatarSuccess"
+                >
+                  <div class="avatar-preview">
+                    <img v-if="avatarUrl" :src="avatarUrl" class="avatar" />
+                    <div v-else class="avatar-placeholder">
+                      <el-icon class="avatar-icon"><Plus /></el-icon>
+                    </div>
+                  </div>
+                </el-upload>
+                <div class="avatar-info">
+                  <h3>个人头像</h3>
+                  <p class="avatar-tip">支持 JPG/PNG 格式，大小不超过 2MB</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="form-grid">
+              <el-form-item label="用户名" class="form-item">
+                <el-input 
+                  v-model="form.username" 
+                  placeholder="请输入用户名"
+                  size="large"
+                />
+              </el-form-item>
+              
+              <el-form-item label="邮箱" class="form-item">
+                <el-input 
+                  v-model="form.email" 
+                  type="email" 
+                  placeholder="请输入邮箱地址"
+                  size="large"
+                />
+              </el-form-item>
+              
+              <el-form-item label="生日" class="form-item">
+                <el-input 
+                  v-model="form.birth_date" 
+                  type="date" 
+                  placeholder="选择您的生日"
+                  size="large"
+                />
+              </el-form-item>
+            </div>
+          </div>
+          
+          <div class="form-section">
+            <h2>个人简介</h2>
+            <el-form-item label="" class="bio-item">
+              <el-input 
+                v-model="form.bio" 
+                type="textarea" 
+                :rows="5"
+                placeholder="介绍一下自己，例如兴趣爱好、职业等..."
+                maxlength="200"
+                show-word-limit
+              />
+            </el-form-item>
+          </div>
+          
+          <div class="form-actions">
+            <el-button @click="cancel" size="large" class="cancel-button">
+              取消
+            </el-button>
+            <el-button 
+              type="primary" 
+              @click="submitForm" 
+              :loading="loading"
+              size="large"
+              class="submit-button"
+            >
+              保存更改
+            </el-button>
+          </div>
+        </el-form>
+      </el-card>
     </div>
   </div>
 </template>
 
 <style scoped>
 .edit-profile {
-  padding: 20px 0;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4edf9 100%);
+  padding: 30px 0;
 }
 
-.container {
-  max-width: 600px;
+.profile-container {
+  max-width: 800px;
   margin: 0 auto;
   padding: 0 20px;
 }
 
-h1 {
+.header-section {
   text-align: center;
   margin-bottom: 30px;
+}
+
+.header-section h1 {
+  font-size: 2.2rem;
   color: #333;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.header-section p {
+  font-size: 1.1rem;
+  color: #666;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.profile-card {
+  border-radius: 20px;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
+  border: none;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.profile-card :deep(.el-card__body) {
+  padding: 0;
 }
 
 .profile-form {
-  background: white;
   padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
 
-.avatar-upload {
-  text-align: center;
+.form-section {
   margin-bottom: 30px;
 }
 
-.avatar-uploader .avatar {
+.form-section h2 {
+  font-size: 1.4rem;
+  color: #333;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #f0f0f0;
+  position: relative;
+}
+
+.form-section h2::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  border-radius: 1px;
+}
+
+.avatar-upload-section {
+  margin-bottom: 30px;
+}
+
+.avatar-upload {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.avatar-preview {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.avatar-preview:hover {
+  transform: scale(1.05);
+}
+
+.avatar {
   width: 120px;
   height: 120px;
-  display: block;
   border-radius: 50%;
   object-fit: cover;
+  border: 3px solid #fff;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
-.avatar-uploader-icon {
-  font-size: 28px;
-  color: #8c939d;
+.avatar-placeholder {
   width: 120px;
   height: 120px;
-  text-align: center;
-  border: 1px dashed #d9d9d9;
   border-radius: 50%;
-  line-height: 120px;
-  cursor: pointer;
-  transition: all 0.3s;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid #fff;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
-.avatar-uploader-icon:hover {
-  border-color: #42b883;
+.avatar-icon {
+  font-size: 2.5rem;
+  color: white;
+}
+
+.avatar-info h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.2rem;
+  color: #333;
 }
 
 .avatar-tip {
-  margin-top: 10px;
-  font-size: 14px;
-  color: #666;
+  margin: 0;
+  font-size: 0.9rem;
+  color: #999;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.form-item :deep(.el-form-item__label) {
+  font-weight: 500;
+  color: #555;
+  font-size: 1rem;
+}
+
+.form-item :deep(.el-input__wrapper) {
+  border-radius: 10px;
+  padding: 8px 15px;
+}
+
+.bio-item :deep(.el-textarea__inner) {
+  border-radius: 10px;
+  padding: 15px;
+  font-size: 1rem;
+  min-height: 120px;
+}
+
+.bio-item :deep(.el-input__count) {
+  background: transparent;
+  color: #999;
 }
 
 .form-actions {
   display: flex;
   justify-content: center;
   gap: 20px;
-  margin-top: 30px;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #f0f0f0;
 }
 
-.form-actions .el-button {
-  min-width: 100px;
+.cancel-button {
+  padding: 12px 30px;
+  border-radius: 30px;
+  font-size: 1rem;
+  font-weight: 500;
+  border: 1px solid #ddd;
+  transition: all 0.3s ease;
+}
+
+.cancel-button:hover {
+  background-color: #f5f5f5;
+  transform: translateY(-2px);
+}
+
+.submit-button {
+  padding: 12px 30px;
+  border-radius: 30px;
+  font-size: 1rem;
+  font-weight: 500;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  border: none;
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+}
+
+.submit-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .edit-profile {
+    padding: 20px 0;
+  }
+  
+  .profile-container {
+    padding: 0 15px;
+  }
+  
+  .header-section h1 {
+    font-size: 1.8rem;
+  }
+  
+  .header-section p {
+    font-size: 1rem;
+  }
+  
+  .profile-card {
+    border-radius: 15px;
+  }
+  
+  .profile-form {
+    padding: 20px;
+  }
+  
+  .form-section h2 {
+    font-size: 1.3rem;
+  }
+  
+  .avatar-upload {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .form-item :deep(.el-form-item__label) {
+    font-size: 0.95rem;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .cancel-button,
+  .submit-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-section h1 {
+    font-size: 1.6rem;
+  }
+  
+  .profile-form {
+    padding: 15px;
+  }
+  
+  .form-section {
+    margin-bottom: 25px;
+  }
+  
+  .avatar {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .avatar-placeholder {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .avatar-icon {
+    font-size: 2rem;
+  }
 }
 </style>
