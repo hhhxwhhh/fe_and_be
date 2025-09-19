@@ -109,12 +109,18 @@ def conversation_list(request):
     # 序列化数据
     result = []
     for conv in conversations_list:
+        # 获取用户头像的完整URL
+        avatar_url = None
+        if conv["user"].avatar:
+            # 使用 request.build_absolute_uri 生成完整URL
+            avatar_url = request.build_absolute_uri(conv["user"].avatar.url)
+
         result.append(
             {
                 "user": {
                     "id": conv["user"].id,
                     "username": conv["user"].username,
-                    "avatar": conv["user"].avatar.url if conv["user"].avatar else None,
+                    "avatar": avatar_url,
                 },
                 "last_message": {
                     "content": conv["last_message"].content,
@@ -136,7 +142,10 @@ def conversation_list(request):
 @permission_classes([permissions.IsAuthenticated])
 def mark_as_read(request, message_id):
     """处理消息，转换为已读"""
-    message = get_object_or_404(Message, id=message_id, recipient=request.user)
-    message.is_read = True
-    message.save()
-    return Response({"status": "message marked as read"})
+    try:
+        message = get_object_or_404(Message, id=message_id, recipient=request.user)
+        message.is_read = True
+        message.save()
+        return Response({"status": "message marked as read"})
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

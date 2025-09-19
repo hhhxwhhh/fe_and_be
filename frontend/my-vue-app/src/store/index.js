@@ -95,25 +95,58 @@ export const useMainStore = defineStore('main', {
       try {
         const response = await messageAPI.getConversations()
         this.conversations = response.data
+        
+        // 更新全局未读计数
+        await this.fetchUnreadNotificationCount()
       } catch (error) {
         console.error('Error fetching conversations:', error)
       }
     },
 
-    async fetchConversation(userId) {
+        async fetchConversation(userId) {
       try {
-        const response = await messageAPI.getMessages(userId)
+        const response = await messageAPI.getMessages(userId);
         this.currentConversation = {
           userId,
-          messages: response.data
+          messages: response.data || []
+        };
+        
+        // 标记所有未读消息为已读
+        if (Array.isArray(response.data)) {
+          // 先过滤出有效的未读消息
+          const unreadMessages = response.data.filter(msg => {
+            // 确保msg对象存在且具有必要的属性
+            return msg && 
+                   typeof msg === 'object' && 
+                   msg.is_read === false && 
+                   msg.recipient && 
+                   typeof msg.recipient === 'object' && 
+                   msg.recipient.id && 
+                   this.user && 
+                   this.user.id && 
+                   msg.recipient.id === this.user.id && 
+                   msg.id;
+          });
+          
+          // 逐个标记未读消息为已读
+          for (const message of unreadMessages) {
+            try {
+              await messageAPI.markAsRead(message.id);
+            } catch (error) {
+              console.error('Error marking message as read:', error);
+            }
+          }
         }
+        
+        // 更新全局未读计数
+        await this.fetchUnreadNotificationCount();
       } catch (error) {
-        console.error('Error fetching conversation:', error)
+        console.error('Error fetching conversation:', error);
         // 如果获取对话失败，初始化一个空的对话
         this.currentConversation = {
           userId,
           messages: []
-        }
+        };
       }
     },
 

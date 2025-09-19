@@ -13,9 +13,11 @@ onMounted(async () => {
   conversations.value = store.conversations
 })
 
-const openConversation = (userId) => {
-  router.push(`/messages/${userId}`)
+const openConversation = async (userId) => {
+  await store.fetchConversation(userId);
+  router.push(`/messages/${userId}`);
 }
+
 </script>
 
 <template>

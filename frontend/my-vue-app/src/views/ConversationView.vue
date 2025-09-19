@@ -31,12 +31,14 @@ const initializeConversation = async () => {
   }
 
   await store.fetchConversation(userId)
-  messages.value = store.currentConversation?.messages || []
+  messages.value = Array.isArray(store.currentConversation?.messages) 
+    ? store.currentConversation.messages 
+    : []
   
   // 尝试从消息中获取recipient信息
   if (messages.value.length > 0) {
     const firstMessage = messages.value[0];
-    if (firstMessage.sender && firstMessage.recipient) {
+    if (firstMessage && firstMessage.sender && firstMessage.recipient) {
       recipient.value = firstMessage.sender.id === (store.user?.id || 0) 
         ? firstMessage.recipient 
         : firstMessage.sender
@@ -44,14 +46,16 @@ const initializeConversation = async () => {
   }
   
   // 如果还没有recipient信息，我们需要从API获取用户信息
-  if (!recipient.value) {
+  if (!recipient.value && userId) {
     try {
       // 使用正确的 API 方法获取用户信息
       const response = await authAPI.userProfile(userId)
-      recipient.value = {
-        id: response.data.id,
-        username: response.data.username,
-        avatar: response.data.avatar
+      if (response && response.data) {
+        recipient.value = {
+          id: response.data.id,
+          username: response.data.username,
+          avatar: response.data.avatar
+        }
       }
     } catch (error) {
       console.error('获取用户信息失败:', error)
@@ -81,10 +85,14 @@ const scrollToBottom = () => {
 
 const handleNewMessage = async (content) => {
   const userId = parseInt(route.params.userId)
+  if (isNaN(userId)) return;
+  
   try {
     const newMessage = await store.sendMessage(userId, content)
-    messages.value.push(newMessage)
-    scrollToBottom()
+    if (newMessage && typeof newMessage === 'object') {
+      messages.value.push(newMessage)
+      scrollToBottom()
+    }
   } catch (error) {
     console.error('发送消息失败:', error)
   }
