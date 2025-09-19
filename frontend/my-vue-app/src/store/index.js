@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { authAPI, postAPI, commentAPI, likeAPI, notificationAPI, messageAPI } from '../api'
+import websocket from '../services/websocket'
 
 export const useMainStore = defineStore('main', {
   state: () => ({
@@ -47,6 +48,7 @@ export const useMainStore = defineStore('main', {
         post.likes_count = post.is_liked ? (post.likes_count || 0) + 1 : Math.max(0, (post.likes_count || 0) - 1)
       }
     },
+    
     async fetchNotifications() {
       try {
         const response = await notificationAPI.getNotifications()
@@ -132,6 +134,8 @@ export const useMainStore = defineStore('main', {
           for (const message of unreadMessages) {
             try {
               await messageAPI.markAsRead(message.id);
+              // 也通过WebSocket通知发送者
+              websocket.markAsRead(message.id);
             } catch (error) {
               console.error('Error marking message as read:', error);
             }
@@ -152,51 +156,162 @@ export const useMainStore = defineStore('main', {
 
     async sendMessage(userId, messageContent) {
       try {
-        const messageData = {
-          recipient: userId,
-          content: messageContent
-        };
-        const response = await messageAPI.sendMessage(messageData); // 调用 API 发送消息
-        
-        if (!this.currentConversation || this.currentConversation.userId !== userId) {
-          // 如果当前对话不存在或不是与该用户的对话，创建一个新的对话
-          this.currentConversation = {
-            userId,
-            messages: []
-          };
-        }
-        
-        // 确保返回的消息对象格式正确
-        if (response.data) {
-          const newMessage = {
-            ...response.data,
-            sender: response.data.sender || this.user,
-            recipient: response.data.recipient || { id: userId },
-            timestamp: response.data.timestamp || new Date().toISOString(),
-            is_read: response.data.is_read || false
+        // 通过WebSocket发送消息
+        return new Promise((resolve, reject) => {
+          // 设置超时
+          const timeout = setTimeout(() => {
+            reject(new Error('Message send timeout'));
+          }, 10000);
+          
+          // 监听WebSocket响应
+          const messageHandler = (data) => {
+            if (data.type === 'message') {
+              clearTimeout(timeout);
+              websocket.off('message', messageHandler);
+              
+              const newMessage = {
+                ...data.message,
+                sender: data.message.sender || this.user,
+                recipient: data.message.recipient || { id: userId },
+                timestamp: data.message.timestamp || new Date().toISOString(),
+                is_read: data.message.is_read || false
+              };
+              
+              if (!this.currentConversation || this.currentConversation.userId !== userId) {
+                this.currentConversation = {
+                  userId,
+                  messages: []
+                };
+              }
+              
+              // 检查消息是否已经存在于列表中
+              const existingMessageIndex = this.currentConversation.messages.findIndex(
+                msg => msg.id === newMessage.id
+              );
+              
+              if (existingMessageIndex !== -1) {
+                this.currentConversation.messages[existingMessageIndex] = newMessage;
+              } else {
+                this.currentConversation.messages.push(newMessage);
+              }
+              
+              resolve(newMessage);
+            }
           };
           
-          // 检查消息是否已经存在于列表中（通过ID判断）
-          const existingMessageIndex = this.currentConversation.messages.findIndex(
-            msg => msg.id === newMessage.id
-          );
+          websocket.on('message', messageHandler);
           
-          if (existingMessageIndex !== -1) {
-            // 如果消息已存在，更新它而不是添加新消息
-            this.currentConversation.messages[existingMessageIndex] = newMessage;
-          } else {
-            // 如果消息不存在，添加新消息
-            this.currentConversation.messages.push(newMessage);
+          // 发送消息
+          websocket.sendMessage(userId, messageContent);
+        });
+      } catch (error) {
+        console.error('Failed to send message via WebSocket:', error);
+        // 如果WebSocket失败，回退到HTTP API
+        try {
+          const messageData = {
+            recipient: userId,
+            content: messageContent
+          };
+          const response = await messageAPI.sendMessage(messageData);
+          
+          if (!this.currentConversation || this.currentConversation.userId !== userId) {
+            this.currentConversation = {
+              userId,
+              messages: []
+            };
           }
           
-          return newMessage;
+          if (response.data) {
+            const newMessage = {
+              ...response.data,
+              sender: response.data.sender || this.user,
+              recipient: response.data.recipient || { id: userId },
+              timestamp: response.data.timestamp || new Date().toISOString(),
+              is_read: response.data.is_read || false
+            };
+            
+            const existingMessageIndex = this.currentConversation.messages.findIndex(
+              msg => msg.id === newMessage.id
+            );
+            
+            if (existingMessageIndex !== -1) {
+              this.currentConversation.messages[existingMessageIndex] = newMessage;
+            } else {
+              this.currentConversation.messages.push(newMessage);
+            }
+            
+            return newMessage;
+          }
+        } catch (httpError) {
+          console.error('Failed to send message via HTTP:', httpError);
+          throw httpError;
         }
-      } catch (error) {
-        console.error('Failed to send message:', error);
-        throw error;
       }
     },
 
+    // 初始化WebSocket连接
+    initWebSocket() {
+      if (this.user) {
+        websocket.connect();
+        
+        // 监听WebSocket消息
+        websocket.on('message', (data) => {
+          if (data.type === 'message') {
+            // 处理接收到的新消息
+            this.handleIncomingMessage(data.message);
+          }
+        });
+      }
+    },
+    
+    // 处理接收到的新消息
+    handleIncomingMessage(message) {
+      // 更新当前对话（如果正在查看该对话）
+      if (this.currentConversation && 
+          (message.sender.id === this.currentConversation.userId || 
+           message.recipient.id === this.currentConversation.userId)) {
+        
+        const existingMessageIndex = this.currentConversation.messages.findIndex(
+          msg => msg.id === message.id
+        );
+        
+        if (existingMessageIndex !== -1) {
+          this.currentConversation.messages[existingMessageIndex] = message;
+        } else {
+          this.currentConversation.messages.push(message);
+        }
+      }
+      
+      // 更新对话列表
+      const conversationIndex = this.conversations.findIndex(
+        conv => conv.user.id === message.sender.id
+      );
+      
+      if (conversationIndex !== -1) {
+        this.conversations[conversationIndex] = {
+          ...this.conversations[conversationIndex],
+          last_message: {
+            content: message.content,
+            timestamp: message.timestamp,
+            is_read: message.is_read
+          },
+          unread_count: this.conversations[conversationIndex].unread_count + 1
+        };
+      } else {
+        // 添加新对话
+        this.conversations.unshift({
+          user: message.sender,
+          last_message: {
+            content: message.content,
+            timestamp: message.timestamp,
+            is_read: false
+          },
+          unread_count: 1
+        });
+      }
+      
+      // 更新未读计数
+      this.unreadNotificationCount += 1;
+    }
   }
-
 })

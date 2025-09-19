@@ -24,6 +24,23 @@ const handleKeydown = (e) => {
     sendMessage()
   }
 }
+
+const handleNewMessage = async (content) => {
+  const userId = parseInt(route.params.userId)
+  if (isNaN(userId)) return;
+  
+  try {
+    const newMessage = await store.sendMessage(userId, content)
+    if (newMessage && typeof newMessage === 'object') {
+      messages.value.push(newMessage)
+      scrollToBottom()
+    }
+  } catch (error) {
+    console.error('发送消息失败:', error)
+  }
+}
+
+
 </script>
 
 <template>

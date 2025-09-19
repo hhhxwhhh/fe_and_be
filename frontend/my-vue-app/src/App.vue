@@ -6,11 +6,25 @@ import { authAPI } from './api'
 import { ElContainer, ElHeader, ElMain, ElMenu, ElMenuItem, ElIcon, ElAvatar, ElDropdown, ElDropdownMenu, ElDropdownItem } from 'element-plus'
 import { HomeFilled, UserFilled, Edit, SwitchButton, Bell, ChatDotRound } from '@element-plus/icons-vue'
 import NotificationBell from './components/NotificationBell.vue'
+import websocket from './services/websocket'
 const store = useMainStore()
 const router = useRouter()
 const route = useRoute()
 
 const activeIndex = ref('/')
+
+
+watch(() => store.user, (newUser) => {
+  if (newUser) {
+    store.initWebSocket()
+  } else {
+    
+    websocket.disconnect()
+  }
+})
+
+
+
 
 // 监听路由变化，更新激活的菜单项
 watch(() => route.path, (newPath) => {

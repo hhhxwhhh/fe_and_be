@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useMainStore } from '../store'
 import { useRouter } from 'vue-router'
 import MessageItem from '../components/MessageItem.vue'
+import websocket from '../services/websocket'
 
 const store = useMainStore()
 const router = useRouter()
@@ -10,7 +11,11 @@ const conversations = ref([])
 
 onMounted(async () => {
   await store.fetchConversations()
-  conversations.value = store.conversations
+  conversations.value = store.conversations;
+
+  if(!websocket.isConnected){
+    store.initWebSocket();
+  }
 })
 
 const openConversation = async (userId) => {

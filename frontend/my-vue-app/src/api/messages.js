@@ -1,5 +1,5 @@
 import axios from 'axios'
-
+import websocket from '../services/websocket'
 const API_BASE_URL = 'http://localhost:8000/api'
 
 // 创建一个不带拦截器的新axios实例专门用于消息
@@ -64,6 +64,34 @@ export const sendMessage = (messageData) => {
 export const markAsRead = (messageId) => {
   return api.patch(`/messages/messages/${messageId}/read/`)
 }
+
+// 支持WebSocket回退
+export const sendMessageWithFallback = async (messageData) => {
+  // 首先尝试通过WebSocket发送
+  if (websocket.isConnected) {
+    try {
+      return await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('WebSocket timeout'));
+        }, 5000);
+        
+        websocket.sendMessage(messageData.recipient, messageData.content);
+        
+        // 这里需要根据实际的后端响应来处理
+        setTimeout(() => {
+          clearTimeout(timeout);
+          resolve({ data: { success: true } });
+        }, 100);
+      });
+    } catch (error) {
+      console.warn('WebSocket发送失败，回退到HTTP:', error);
+    }
+  }
+  
+  // 如果WebSocket不可用，使用HTTP API
+  return api.post('/messages/messages/', messageData);
+};
+
 
 // 默认导出整个API对象
 export default {
