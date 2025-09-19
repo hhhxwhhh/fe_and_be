@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { authAPI, postAPI, commentAPI, likeAPI,notificationAPI,messageAPI } from '../api'
+import { authAPI, postAPI, commentAPI, likeAPI, notificationAPI, messageAPI } from '../api'
 
 export const useMainStore = defineStore('main', {
   state: () => ({
@@ -117,10 +117,28 @@ export const useMainStore = defineStore('main', {
       }
     },
 
-
+    // 新增 sendMessage action
+    async sendMessage(userId, messageContent) {
+      try {
+        const messageData = {
+          recipient_id: userId,
+          content: messageContent
+        };
+        const response = await messageAPI.sendMessage(messageData); // 调用 API 发送消息
+        if (!this.currentConversation || this.currentConversation.userId !== userId) {
+          // 如果当前对话不存在或不是与该用户的对话，创建一个新的对话
+          this.currentConversation = {
+            userId,
+            messages: []
+          };
+        }
+        // 将新消息添加到当前对话的消息列表中
+        this.currentConversation.messages.push(response.data);
+      } catch (error) {
+        console.error('Failed to send message:', error);
+      }
+    }
 
   }
-
-    
 
 })

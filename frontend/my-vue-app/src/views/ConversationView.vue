@@ -4,6 +4,7 @@ import { useMainStore } from '../store'
 import { useRoute, useRouter } from 'vue-router'
 import MessageForm from '../components/MessageForm.vue'
 import MessageItem from '../components/MessageItem.vue'
+import { authAPI } from '../api' // 导入正确的 API 方法
 
 const store = useMainStore()
 const route = useRoute()
@@ -22,16 +23,36 @@ onMounted(async () => {
 
   await store.fetchConversation(userId)
   messages.value = store.currentConversation?.messages || []
-  recipient.value = messages.value.length > 0 
-    ? (messages.value[0].sender.id === store.user.id 
-        ? messages.value[0].recipient 
-        : messages.value[0].sender)
-    : null
   
-  // 如果还没有recipient信息，我们需要从路由参数中获取
+  // 尝试从消息中获取recipient信息
+  if (messages.value.length > 0) {
+    const firstMessage = messages.value[0];
+    if (firstMessage.sender && firstMessage.recipient) {
+      recipient.value = firstMessage.sender.id === (store.user?.id || 0) 
+        ? firstMessage.recipient 
+        : firstMessage.sender
+    }
+  }
+  
+  // 如果还没有recipient信息，我们需要从API获取用户信息
   if (!recipient.value) {
-    // 这里可以调用API获取用户信息
-    // 为简化起见，我们暂时使用userId作为标识
+    try {
+      // 使用正确的 API 方法获取用户信息
+      const response = await authAPI.userProfile(userId)
+      recipient.value = {
+        id: response.data.id,
+        username: response.data.username,
+        avatar: response.data.avatar
+      }
+    } catch (error) {
+      console.error('获取用户信息失败:', error)
+      // 如果获取失败，使用默认值
+      recipient.value = {
+        id: userId,
+        username: `用户 ${userId}`,
+        avatar: null
+      }
+    }
   }
   
   loading.value = false
@@ -65,26 +86,18 @@ const handleNewMessage = async (content) => {
   <div class="conversation-page">
     <div class="conversation-header">
       <button @click="router.push('/messages')" class="back-button">←</button>
-      <div v-if="recipient" class="recipient-info">
+      <div class="recipient-info">
         <div class="recipient-avatar">
           <img 
-            v-if="recipient.avatar" 
+            v-if="recipient && recipient.avatar" 
             :src="recipient.avatar" 
             :alt="recipient.username"
           >
           <div v-else class="avatar-placeholder">
-            {{ recipient.username.charAt(0).toUpperCase() }}
+            {{ recipient && recipient.username ? recipient.username.charAt(0).toUpperCase() : 'U' }}
           </div>
         </div>
-        <div class="recipient-name">{{ recipient.username }}</div>
-      </div>
-      <div v-else class="recipient-info">
-        <div class="recipient-avatar">
-          <div class="avatar-placeholder">
-            U
-          </div>
-        </div>
-        <div class="recipient-name">用户 {{ route.params.userId }}</div>
+        <div class="recipient-name">{{ recipient && recipient.username ? recipient.username : `用户 ${route.params.userId}` }}</div>
       </div>
     </div>
     
@@ -95,9 +108,9 @@ const handleNewMessage = async (content) => {
         v-for="message in messages" 
         :key="message.id"
         class="message-wrapper"
-        :class="{ 'own-message': message.sender.id === store.user.id }"
+        :class="{ 'own-message': message.sender && message.sender.id === (store.user?.id || 0) }"
       >
-        <MessageItem :message="message" :current-user-id="store.user.id" />
+        <MessageItem :message="message" :current-user-id="store.user?.id || 0" />
       </div>
       
       <div v-if="messages.length === 0" class="no-messages">
