@@ -1,5 +1,7 @@
 from django.urls import path
 from . import views
+from . import consumers
+
 
 urlpatterns = [
     path("conversations/", views.conversation_list, name="conversation-list"),
@@ -12,4 +14,7 @@ urlpatterns = [
         views.mark_as_read,
         name="message-mark-as-read",
     ),
+]
+websocket_urlpatterns = [
+    path("ws/chat/", consumers.ChatConsumer.as_asgi()),
 ]

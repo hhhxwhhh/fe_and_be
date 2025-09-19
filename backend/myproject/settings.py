@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "posts",
     "interactions",
     "messaging",
+    "channels",
 ]
 
 MIDDLEWARE = [
@@ -181,3 +182,9 @@ REST_FRAMEWORK = {
     "DATE_FORMAT": "%Y-%m-%d",
     "DATE_INPUT_FORMATS": ["%Y-%m-%d"],
 }
+
+
+# 添加channels配置
+ASGI_APPLICATION = "myproject.asgi.application"
+
+CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
