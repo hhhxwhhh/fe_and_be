@@ -117,11 +117,10 @@ export const useMainStore = defineStore('main', {
       }
     },
 
-    // 新增 sendMessage action
     async sendMessage(userId, messageContent) {
       try {
         const messageData = {
-          recipient_id: userId,
+          recipient: userId,
           content: messageContent
         };
         const response = await messageAPI.sendMessage(messageData); // 调用 API 发送消息
@@ -133,11 +132,15 @@ export const useMainStore = defineStore('main', {
           };
         }
         // 将新消息添加到当前对话的消息列表中
-        this.currentConversation.messages.push(response.data);
+        if (response.data) {
+          this.currentConversation.messages.push(response.data);
+          return response.data;
+        }
       } catch (error) {
         console.error('Failed to send message:', error);
+        throw error;
       }
-    }
+    },
 
   }
 

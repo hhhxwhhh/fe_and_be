@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, watch } from 'vue'
 import { useMainStore } from '../store'
 import { useRoute, useRouter } from 'vue-router'
 import MessageForm from '../components/MessageForm.vue'
@@ -14,7 +14,16 @@ const messages = ref([])
 const recipient = ref(null)
 const loading = ref(true)
 
-onMounted(async () => {
+// 监听路由变化，确保组件正确更新
+watch(() => route.params.userId, () => {
+  initializeConversation()
+}, { immediate: false })
+
+onMounted(() => {
+  initializeConversation()
+})
+
+const initializeConversation = async () => {
   const userId = parseInt(route.params.userId)
   if (isNaN(userId)) {
     router.push('/messages')
@@ -59,7 +68,7 @@ onMounted(async () => {
   
   // 滚动到最新消息
   scrollToBottom()
-})
+}
 
 const scrollToBottom = () => {
   nextTick(() => {
@@ -81,7 +90,6 @@ const handleNewMessage = async (content) => {
   }
 }
 </script>
-
 <template>
   <div class="conversation-page">
     <div class="conversation-header">
@@ -105,10 +113,10 @@ const handleNewMessage = async (content) => {
     
     <div v-else class="messages-container">
       <div 
-        v-for="message in messages" 
-        :key="message.id"
+        v-for="(message, index) in messages" 
+        :key="message?.id || index"
         class="message-wrapper"
-        :class="{ 'own-message': message.sender && message.sender.id === (store.user?.id || 0) }"
+        :class="{ 'own-message': message?.sender?.id === (store.user?.id || 0) }"
       >
         <MessageItem :message="message" :current-user-id="store.user?.id || 0" />
       </div>
@@ -123,9 +131,6 @@ const handleNewMessage = async (content) => {
     </div>
   </div>
 </template>
-
-<!-- ... styles remain the same ... -->
-
 <style scoped>
 .conversation-page {
   display: flex;
@@ -134,26 +139,46 @@ const handleNewMessage = async (content) => {
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+  border-radius: 15px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
 }
 
 .conversation-header {
   display: flex;
   align-items: center;
   padding-bottom: 15px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   margin-bottom: 15px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 12px;
+  padding: 15px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .back-button {
-  background: none;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
-  font-size: 1.2rem;
+  font-size: 1rem;
   cursor: pointer;
-  color: #333;
-  margin-right: 10px;
+  color: white;
+  margin-right: 15px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.back-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .recipient-info {
@@ -162,41 +187,54 @@ const handleNewMessage = async (content) => {
 }
 
 .recipient-avatar img {
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   object-fit: cover;
-  margin-right: 10px;
+  margin-right: 15px;
+  border: 3px solid #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .avatar-placeholder {
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  background: linear-gradient(45deg, #42b883, #3498db);
+  background: linear-gradient(135deg, #42b883, #3498db);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-weight: bold;
-  margin-right: 10px;
+  margin-right: 15px;
+  border: 3px solid #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  font-size: 1.2rem;
 }
 
 .recipient-name {
-  font-weight: bold;
-  font-size: 1.1rem;
+  font-weight: 600;
+  font-size: 1.3rem;
+  color: #2c3e50;
 }
 
 .loading {
   text-align: center;
   padding: 20px;
-  color: #999;
+  color: #7f8c8d;
+  font-style: italic;
 }
 
 .messages-container {
   flex: 1;
   overflow-y: auto;
-  padding: 10px 0;
+  padding: 20px 10px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  margin-bottom: 15px;
+  backdrop-filter: blur(5px);
 }
 
 .message-wrapper {
@@ -211,11 +249,36 @@ const handleNewMessage = async (content) => {
 .no-messages {
   text-align: center;
   padding: 40px 20px;
-  color: #999;
+  color: #95a5a6;
+  font-style: italic;
+  align-self: center;
 }
 
 .message-form-container {
   padding-top: 15px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 12px;
+  padding: 15px;
+  backdrop-filter: blur(10px);
+}
+
+/* 滚动条样式 */
+.messages-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.messages-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+}
+
+.messages-container::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
+
+.messages-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
 }
 </style>

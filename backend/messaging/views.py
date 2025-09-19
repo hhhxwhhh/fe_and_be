@@ -33,6 +33,32 @@ class MessageCreateView(generics.CreateAPIView):
     serializer_class = MessageCreateSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            # 检查是否尝试给自己发消息
+            recipient_id = request.data.get("recipient")
+            if str(request.user.id) == str(recipient_id):
+                return Response(
+                    {"detail": "不能给自己发送消息"}, status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # 检查接收者是否存在
+            try:
+                recipient = User.objects.get(id=recipient_id)
+            except User.DoesNotExist:
+                return Response(
+                    {"recipient": "接收者不存在"}, status=status.HTTP_400_BAD_REQUEST
+                )
+
+            serializer.save(sender=request.user)
+            headers = self.get_success_headers(serializer.data)
+            return Response(
+                serializer.data, status=status.HTTP_201_CREATED, headers=headers
+            )
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     def perform_create(self, serializer):
         serializer.save(sender=self.request.user)
 
