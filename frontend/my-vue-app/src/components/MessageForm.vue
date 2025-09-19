@@ -29,16 +29,19 @@ const handleKeydown = (e) => {
 <template>
   <div class="message-form">
     <textarea
+      id="message-input"
       v-model="content"
       placeholder="输入消息..."
       :disabled="loading"
       @keydown="handleKeydown"
       rows="1"
+      name="message"
     ></textarea>
     <button 
       @click="sendMessage" 
       :disabled="!content.trim() || loading"
       class="send-button"
+      type="submit"
     >
       发送
     </button>

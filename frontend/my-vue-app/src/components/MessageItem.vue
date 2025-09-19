@@ -14,6 +14,21 @@ const props = defineProps({
 
 // 判断是否为自己发送的消息
 const isOwnMessage = props.message?.sender?.id === props.currentUserId
+
+//格式化时间统一
+const formatTime = (timestamp) => {
+  if(!timestamp) return 'Invalid Timestamp';
+  try {
+    const date=new Date(timestamp);
+    if (isNaN(date.getTime())){
+      return 'Invalid Timestamp';
+    }
+    return DataTransfer.toLocaleString('zh-CN');
+  } catch (error) {
+    return 'Invalid Timestamp';
+  }
+}
+
 </script>
 
 <template>
@@ -29,7 +44,7 @@ const isOwnMessage = props.message?.sender?.id === props.currentUserId
         {{ message.content }}
       </div>
       <div class="message-time">
-        {{ new Date(message.timestamp).toLocaleString() }}
+        {{ formatTime(message.timestamp) }}
       </div>
     </div>
   </div>
