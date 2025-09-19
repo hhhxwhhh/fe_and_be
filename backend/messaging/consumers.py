@@ -59,9 +59,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     @database_sync_to_async
     def save_message(self, sender_id, recipient_id, content):
         sender = User.objects.get(id=sender_id)
-        recipent = User.objects.get(id=recipient_id)
+        recipient = User.objects.get(id=recipient_id)
         return Message.objects.create(
-            sender=sender, recipient=recipent, content=content
+            sender=sender, recipient=recipient, content=content
         )
 
     @database_sync_to_async

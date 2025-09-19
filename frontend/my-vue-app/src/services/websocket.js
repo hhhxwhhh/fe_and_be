@@ -7,9 +7,15 @@ class WebSocketService {
     this.reconnectInterval = 3000;
     this.listeners = {};
     this.pingInterval = null;
+    this.isConnecting = false;
   }
 
   connect() {
+    // 防止重复连接
+    if (this.isConnecting || this.isConnected) {
+      return;
+    }
+
     const token = localStorage.getItem('token');
     if (!token) {
       console.error('No token available for WebSocket connection');
@@ -17,60 +23,76 @@ class WebSocketService {
       return;
     }
 
+    this.isConnecting = true;
+    
     // 使用正确的WebSocket协议连接
     const wsUrl = `ws://localhost:8000/ws/chat/?token=${token}`;
     console.log('Connecting to WebSocket:', wsUrl);
     
-    this.socket = new WebSocket(wsUrl);
+    try {
+      this.socket = new WebSocket(wsUrl);
 
-    this.socket.onopen = () => {
-      console.log('WebSocket connected');
-      this.isConnected = true;
-      this.reconnectAttempts = 0;
-      
-      // 启动心跳检测
-      this.startPing();
-      
-      this.emit('connected');
-    };
+      this.socket.onopen = () => {
+        console.log('WebSocket connected');
+        this.isConnected = true;
+        this.isConnecting = false;
+        this.reconnectAttempts = 0;
+        
+        // 启动心跳检测
+        this.startPing();
+        
+        this.emit('connected');
+      };
 
-    this.socket.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        this.emit('message', data);
-      } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
-      }
-    };
-
-    this.socket.onclose = (event) => {
-      console.log('WebSocket disconnected. Code:', event.code, 'Reason:', event.reason);
-      this.isConnected = false;
-      this.stopPing();
-      this.emit('disconnected');
-      
-      // 只有在非正常关闭的情况下才尝试重连
-      if (event.code !== 1000) { // 1000是正常关闭
-        if (this.reconnectAttempts < this.maxReconnectAttempts) {
-          this.reconnectAttempts++;
-          setTimeout(() => {
-            console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
-            this.connect();
-          }, this.reconnectInterval);
+      this.socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          this.emit('message', data);
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error);
         }
-      }
-    };
+      };
 
-    this.socket.onerror = (error) => {
-      console.error('WebSocket error:', error);
+      this.socket.onclose = (event) => {
+        console.log('WebSocket disconnected. Code:', event.code, 'Reason:', event.reason);
+        this.isConnected = false;
+        this.isConnecting = false;
+        this.stopPing();
+        this.emit('disconnected');
+        
+        // 只有在非正常关闭的情况下才尝试重连
+        if (event.code !== 1000) { // 1000是正常关闭
+          if (this.reconnectAttempts < this.maxReconnectAttempts) {
+            this.reconnectAttempts++;
+            setTimeout(() => {
+              console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+              this.connect();
+            }, this.reconnectInterval);
+          } else {
+            console.error('Max reconnect attempts reached. Giving up.');
+            this.emit('error', new Error('Failed to connect to WebSocket after multiple attempts'));
+          }
+        }
+      };
+
+      this.socket.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        this.isConnecting = false;
+        this.emit('error', error);
+      };
+    } catch (error) {
+      console.error('Failed to create WebSocket connection:', error);
+      this.isConnecting = false;
       this.emit('error', error);
-    };
+    }
   }
 
   disconnect() {
     if (this.socket) {
       this.stopPing();
       this.socket.close(1000, 'Client disconnect'); // 正常关闭
+      this.isConnected = false;
+      this.isConnecting = false;
     }
   }
 
@@ -86,7 +108,7 @@ class WebSocketService {
       return Promise.resolve();
     } else {
       console.error('WebSocket is not connected');
-      return Promise.reject(new Error('WebSocket is not connected'));
+      return Promise.reject(new Error('WebSocket is not connected. Please check your connection.'));
     }
   }
 
