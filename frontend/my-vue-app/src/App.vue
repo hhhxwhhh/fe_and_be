@@ -99,9 +99,11 @@ onMounted(async () => {
       <div class="header-container">
         <!-- 左侧导航 -->
         <div class="nav-left">
+          <img src="../public/xw_chat.svg" class="logo"></img>
           <div class="nav-brand">
             <h2>Social Network</h2>
           </div>
+
           
           <el-menu
             :default-active="activeIndex"
@@ -213,6 +215,12 @@ onMounted(async () => {
   align-items: center;
   flex-shrink: 0;
   flex: 1;
+}
+
+.logo {
+  height: 30px;
+  width: auto;
+  margin-right: 10px;
 }
 
 .nav-brand {
