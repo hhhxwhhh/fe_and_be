@@ -276,9 +276,19 @@ onMounted(async () => {
   cursor: pointer;
   color: white;
   font-size: 18px;
+  transition: all 0.3s ease;
+  position: relative;
+  border-radius: 4px;
 }
 
 .messages-icon:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.messages-icon:active {
+  transform: translateY(0);
   background-color: rgba(255, 255, 255, 0.1);
 }
 
@@ -293,20 +303,39 @@ onMounted(async () => {
   padding: 0 1rem;
   cursor: pointer;
   color: white;
+  transition: all 0.3s ease;
+  border-radius: 4px;
 }
 
 .user-info:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.user-info:active {
+  transform: translateY(0);
   background-color: rgba(255, 255, 255, 0.1);
 }
 
 .user-avatar {
   background-color: #c0c4cc;
+  transition: all 0.3s ease;
+}
+
+.user-info:hover .user-avatar {
+  transform: scale(1.05);
 }
 
 .username {
   margin-left: 8px;
   font-weight: 500;
   white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+.user-info:hover .username {
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
 }
 
 .menu-text {
