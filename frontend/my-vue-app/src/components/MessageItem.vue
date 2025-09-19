@@ -1,5 +1,5 @@
 <script setup>
-
+// MessageItem.vue 应该是一个简单的展示组件，不应该包含复杂的逻辑和路由处理
 
 const props = defineProps({
   message: {
@@ -15,20 +15,29 @@ const props = defineProps({
 // 判断是否为自己发送的消息
 const isOwnMessage = props.message?.sender?.id === props.currentUserId
 
-//格式化时间统一
+// 格式化时间显示
 const formatTime = (timestamp) => {
-  if(!timestamp) return 'Invalid Timestamp';
+  if (!timestamp) return 'Invalid Date'
+  
   try {
-    const date=new Date(timestamp);
-    if (isNaN(date.getTime())){
-      return 'Invalid Timestamp';
+    const date = new Date(timestamp)
+    if (isNaN(date.getTime())) {
+      return 'Invalid Date'
     }
-    return DataTransfer.toLocaleString('zh-CN');
-  } catch (error) {
-    return 'Invalid Timestamp';
+    return date.toLocaleString('zh-CN')
+  } catch (e) {
+    return 'Invalid Date'
   }
 }
 
+// 安全地获取消息内容
+const getMessageContent = (message) => {
+  if (!message || typeof message !== 'object') return ''
+  if (!message.content) return ''
+  // 确保内容是字符串类型
+  if (typeof message.content !== 'string') return String(message.content)
+  return message.content
+}
 </script>
 
 <template>
@@ -41,7 +50,7 @@ const formatTime = (timestamp) => {
         {{ message.sender.username }}
       </div>
       <div class="message-text">
-        {{ message.content }}
+        {{ getMessageContent(message) }}
       </div>
       <div class="message-time">
         {{ formatTime(message.timestamp) }}

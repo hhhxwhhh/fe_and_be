@@ -4,7 +4,7 @@ import { useMainStore } from '../store'
 import { useRoute, useRouter } from 'vue-router'
 import MessageForm from '../components/MessageForm.vue'
 import MessageItem from '../components/MessageItem.vue'
-import { authAPI } from '../api' // 导入正确的 API 方法
+import { authAPI } from '../api' 
 
 const store = useMainStore()
 const route = useRoute()
@@ -87,8 +87,11 @@ const handleNewMessage = async (content) => {
   const userId = parseInt(route.params.userId)
   if (isNaN(userId)) return;
   
+  // 确保内容是字符串类型
+  const messageContent = typeof content === 'string' ? content : String(content);
+  
   try {
-    const newMessage = await store.sendMessage(userId, content)
+    const newMessage = await store.sendMessage(userId, messageContent)
     if (newMessage && typeof newMessage === 'object') {
       messages.value.push(newMessage)
       scrollToBottom()
