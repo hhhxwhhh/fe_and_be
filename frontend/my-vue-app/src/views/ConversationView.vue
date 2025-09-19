@@ -87,19 +87,32 @@ const handleNewMessage = async (content) => {
   const userId = parseInt(route.params.userId)
   if (isNaN(userId)) return;
   
-  // 确保内容是字符串类型
-  const messageContent = typeof content === 'string' ? content : String(content);
-  
   try {
-    const newMessage = await store.sendMessage(userId, messageContent)
+    // 发送消息并获取返回的结果
+    const newMessage = await store.sendMessage(userId, content)
+    
+    // 更新本地消息列表（如果需要）
     if (newMessage && typeof newMessage === 'object') {
-      messages.value.push(newMessage)
+      // 检查消息是否已经存在于列表中
+      const existingMessageIndex = messages.value.findIndex(msg => msg.id === newMessage.id)
+      
+      if (existingMessageIndex !== -1) {
+        // 如果已存在，更新它
+        messages.value[existingMessageIndex] = newMessage
+      } else {
+        // 如果不存在，添加到列表
+        messages.value.push(newMessage)
+      }
+      
       scrollToBottom()
     }
   } catch (error) {
     console.error('发送消息失败:', error)
   }
 }
+
+
+
 </script>
 <template>
   <div class="conversation-page">

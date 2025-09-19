@@ -103,7 +103,7 @@ export const useMainStore = defineStore('main', {
       }
     },
 
-        async fetchConversation(userId) {
+    async fetchConversation(userId) {
       try {
         const response = await messageAPI.getMessages(userId);
         this.currentConversation = {
@@ -157,6 +157,7 @@ export const useMainStore = defineStore('main', {
           content: messageContent
         };
         const response = await messageAPI.sendMessage(messageData); // 调用 API 发送消息
+        
         if (!this.currentConversation || this.currentConversation.userId !== userId) {
           // 如果当前对话不存在或不是与该用户的对话，创建一个新的对话
           this.currentConversation = {
@@ -164,10 +165,31 @@ export const useMainStore = defineStore('main', {
             messages: []
           };
         }
-        // 将新消息添加到当前对话的消息列表中
+        
+        // 确保返回的消息对象格式正确
         if (response.data) {
-          this.currentConversation.messages.push(response.data);
-          return response.data;
+          const newMessage = {
+            ...response.data,
+            sender: response.data.sender || this.user,
+            recipient: response.data.recipient || { id: userId },
+            timestamp: response.data.timestamp || new Date().toISOString(),
+            is_read: response.data.is_read || false
+          };
+          
+          // 检查消息是否已经存在于列表中（通过ID判断）
+          const existingMessageIndex = this.currentConversation.messages.findIndex(
+            msg => msg.id === newMessage.id
+          );
+          
+          if (existingMessageIndex !== -1) {
+            // 如果消息已存在，更新它而不是添加新消息
+            this.currentConversation.messages[existingMessageIndex] = newMessage;
+          } else {
+            // 如果消息不存在，添加新消息
+            this.currentConversation.messages.push(newMessage);
+          }
+          
+          return newMessage;
         }
       } catch (error) {
         console.error('Failed to send message:', error);

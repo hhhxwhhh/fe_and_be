@@ -13,19 +13,48 @@ const props = defineProps({
 })
 
 // 判断是否为自己发送的消息
-const isOwnMessage = props.message?.sender?.id === props.currentUserId
+const isOwnMessage = computed(() => {
+  if (!props.message || !props.message.sender) return false
+  return props.message.sender.id === props.currentUserId
+})
 
 // 格式化时间显示
 const formatTime = (timestamp) => {
   if (!timestamp) return 'Invalid Date'
   
   try {
-    const date = new Date(timestamp)
+    // 尝试不同的时间格式
+    let date
+    if (typeof timestamp === 'string') {
+      // 如果是ISO字符串，直接使用
+      if (timestamp.includes('T')) {
+        date = new Date(timestamp)
+      } else {
+        // 尝试解析其他格式
+        date = new Date(timestamp.replace(' ', 'T'))
+      }
+    } else if (timestamp instanceof Date) {
+      date = timestamp
+    } else {
+      // 如果是时间戳数字
+      date = new Date(timestamp)
+    }
+    
     if (isNaN(date.getTime())) {
       return 'Invalid Date'
     }
-    return date.toLocaleString('zh-CN')
+    
+    return date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    })
   } catch (e) {
+    console.error('时间格式化错误:', e)
     return 'Invalid Date'
   }
 }
@@ -38,6 +67,8 @@ const getMessageContent = (message) => {
   if (typeof message.content !== 'string') return String(message.content)
   return message.content
 }
+
+import { computed } from 'vue'
 </script>
 
 <template>
