@@ -47,32 +47,32 @@ api.interceptors.response.use(
 
 // 获取对话列表
 export const getConversations = () => {
-  return api.get('/messaging/conversations/')
+  return api.get('/messages/conversations/')
 }
 
 // 获取与特定用户的对话
 export const getMessages = (userId) => {
-  return api.get(`/messaging/messages/${userId}/`)
+  return api.get(`/messages/messages/${userId}/`)
 }
 
 // 发送消息
 export const sendMessage = (messageData) => {
-  return api.post('/messaging/messages/', messageData)
+  return api.post('/messages/messages/', messageData)
 }
 
 // 更新消息
 export const updateMessage = (messageId, data) => {
-  return api.patch(`/messaging/messages/${messageId}/`, data)
+  return api.patch(`/messages/messages/${messageId}/`, data)
 }
 
 // 删除消息
 export const deleteMessage = (messageId) => {
-  return api.delete(`/messaging/messages/${messageId}/`)
+  return api.delete(`/messages/messages/${messageId}/`)
 }
 
 // 标记消息为已读
 export const markAsRead = (messageId) => {
-  return api.patch(`/messaging/messages/${messageId}/read/`)
+  return api.patch(`/messages/messages/${messageId}/read/`)
 }
 
 // 支持WebSocket回退
