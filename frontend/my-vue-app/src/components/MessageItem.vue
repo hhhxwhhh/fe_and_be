@@ -1,5 +1,5 @@
 <script setup>
-// MessageItem.vue 应该是一个简单的展示组件，不应该包含复杂的逻辑和路由处理
+
 
 const props = defineProps({
   message: {
@@ -11,6 +11,8 @@ const props = defineProps({
     default: 0
   }
 })
+
+const emit = defineEmits(['edit', 'delete'])
 
 // 判断是否为自己发送的消息
 const isOwnMessage = computed(() => {
@@ -68,6 +70,14 @@ const getMessageContent = (message) => {
   return message.content
 }
 
+const handleEdit = () => {
+  emit('edit', props.message)
+}
+
+const handleDelete = () => {
+  emit('delete', props.message)
+}
+
 import { computed } from 'vue'
 </script>
 
@@ -82,9 +92,17 @@ import { computed } from 'vue'
       </div>
       <div class="message-text">
         {{ getMessageContent(message) }}
+        <span v-if="message.is_edited" class="edited-label">(已编辑)</span>
       </div>
       <div class="message-time">
         {{ formatTime(message.timestamp) }}
+        <span v-if="message.updated_at && message.updated_at !== message.timestamp">
+          (编辑于 {{ formatTime(message.updated_at) }})
+        </span>
+      </div>
+      <div v-if="isOwnMessage" class="message-actions">
+        <button @click="handleEdit" class="action-button edit-button">编辑</button>
+        <button @click="handleDelete" class="action-button delete-button">删除</button>
       </div>
     </div>
   </div>
@@ -96,6 +114,7 @@ import { computed } from 'vue'
   margin-bottom: 15px;
   max-width: 80%;
   animation: fadeIn 0.3s ease-out;
+  position: relative;
 }
 
 .message-item.own-message {
@@ -140,6 +159,12 @@ import { computed } from 'vue'
   font-size: 1rem;
 }
 
+.edited-label {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  margin-left: 5px;
+}
+
 .message-time {
   font-size: 0.7rem;
   text-align: right;
@@ -150,6 +175,37 @@ import { computed } from 'vue'
 
 .message-item.own-message .message-time {
   color: rgba(255, 255, 255, 0.8);
+}
+
+.message-actions {
+  display: flex;
+  gap: 5px;
+  margin-top: 8px;
+  justify-content: flex-end;
+}
+
+.action-button {
+  padding: 4px 8px;
+  font-size: 0.7rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.action-button:hover {
+  opacity: 1;
+}
+
+.edit-button {
+  background-color: #3498db;
+  color: white;
+}
+
+.delete-button {
+  background-color: #e74c3c;
+  color: white;
 }
 
 /* 添加消息气泡的尖角效果 */

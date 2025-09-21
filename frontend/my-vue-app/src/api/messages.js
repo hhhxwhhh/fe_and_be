@@ -47,22 +47,32 @@ api.interceptors.response.use(
 
 // 获取对话列表
 export const getConversations = () => {
-  return api.get('/messages/conversations/')
+  return api.get('/messaging/conversations/')
 }
 
 // 获取与特定用户的对话
 export const getMessages = (userId) => {
-  return api.get(`/messages/messages/${userId}/`)
+  return api.get(`/messaging/messages/${userId}/`)
 }
 
 // 发送消息
 export const sendMessage = (messageData) => {
-  return api.post('/messages/messages/', messageData)
+  return api.post('/messaging/messages/', messageData)
+}
+
+// 更新消息
+export const updateMessage = (messageId, data) => {
+  return api.patch(`/messaging/messages/${messageId}/`, data)
+}
+
+// 删除消息
+export const deleteMessage = (messageId) => {
+  return api.delete(`/messaging/messages/${messageId}/`)
 }
 
 // 标记消息为已读
 export const markAsRead = (messageId) => {
-  return api.patch(`/messages/messages/${messageId}/read/`)
+  return api.patch(`/messaging/messages/${messageId}/read/`)
 }
 
 // 支持WebSocket回退
@@ -89,14 +99,15 @@ export const sendMessageWithFallback = async (messageData) => {
   }
   
   // 如果WebSocket不可用，使用HTTP API
-  return api.post('/messages/messages/', messageData);
+  return api.post('/messaging/messages/', messageData);
 };
-
 
 // 默认导出整个API对象
 export default {
   getConversations,
   getMessages,
   sendMessage,
+  updateMessage,
+  deleteMessage,
   markAsRead
 }

@@ -4,7 +4,7 @@ import { useMainStore } from '../store'
 import { useRoute, useRouter } from 'vue-router'
 import MessageForm from '../components/MessageForm.vue'
 import MessageItem from '../components/MessageItem.vue'
-import { authAPI } from '../api' 
+import { authAPI, messageAPI } from '../api' 
 
 const store = useMainStore()
 const route = useRoute()
@@ -13,6 +13,8 @@ const router = useRouter()
 const messages = ref([])
 const recipient = ref(null)
 const loading = ref(true)
+const editingMessage = ref(null)
+const editContent = ref('')
 
 // 监听路由变化，确保组件正确更新
 watch(() => route.params.userId, () => {
@@ -111,7 +113,57 @@ const handleNewMessage = async (content) => {
   }
 }
 
+const handleEditMessage = (message) => {
+  editingMessage.value = message
+  editContent.value = message.content
+}
 
+const saveEditMessage = async () => {
+  if (!editingMessage.value) return
+  
+  try {
+    const response = await messageAPI.updateMessage(editingMessage.value.id, {
+      content: editContent.value
+    })
+    
+    // 更新本地消息列表
+    const index = messages.value.findIndex(msg => msg.id === editingMessage.value.id)
+    if (index !== -1) {
+      messages.value[index] = response.data
+    }
+    
+    // 重置编辑状态
+    editingMessage.value = null
+    editContent.value = ''
+  } catch (error) {
+    console.error('编辑消息失败:', error)
+    alert('编辑消息失败')
+  }
+}
+
+const cancelEditMessage = () => {
+  editingMessage.value = null
+  editContent.value = ''
+}
+
+const handleDeleteMessage = async (message) => {
+  if (!confirm('确定要删除这条消息吗？')) {
+    return
+  }
+  
+  try {
+    await messageAPI.deleteMessage(message.id)
+    
+    // 从本地消息列表中移除
+    const index = messages.value.findIndex(msg => msg.id === message.id)
+    if (index !== -1) {
+      messages.value.splice(index, 1)
+    }
+  } catch (error) {
+    console.error('删除消息失败:', error)
+    alert('删除消息失败')
+  }
+}
 
 </script>
 <template>
