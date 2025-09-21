@@ -6,7 +6,12 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from .models import Message
 from accounts.models import User
-from .serializers import UserSerializer, MessageSerializer, MessageCreateSerializer
+from .serializers import (
+    UserSerializer,
+    MessageSerializer,
+    MessageCreateSerializer,
+    MessageUpdateSerializer,
+)
 
 
 class IsParticipant(permissions.BasePermission):
@@ -14,6 +19,13 @@ class IsParticipant(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         return obj.sender == request.user or obj.recipient == request.user
+
+
+class IsSender(permissions.BasePermission):
+    """只有发送者才能编辑或删除消息"""
+
+    def has_object_permission(self, request, view, obj):
+        return obj.sender == request.user
 
 
 class MessageListView(generics.ListCreateAPIView):
@@ -27,6 +39,38 @@ class MessageListView(generics.ListCreateAPIView):
             (Q(sender=user) & Q(recipient_id=user_id))
             | (Q(sender_id=user_id) & Q(recipient=user))
         ).select_related("sender", "recipient")
+
+
+class MessageDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Message.objects.all()
+    serializer_class = MessageSerializer
+    permission_classes = [permissions.IsAuthenticated, IsParticipant]
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # 检查用户是否有权限编辑消息（只有发送者可以）
+        if instance.sender != request.user:
+            return Response(
+                {"detail": "只有消息发送者可以编辑消息"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = MessageUpdateSerializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            updated_instance = serializer.save(is_edited=True)
+            response_serializer = self.get_serializer(updated_instance)
+            return Response(response_serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # 检查用户是否有权限删除消息（只有发送者可以）
+        if instance.sender != request.user:
+            return Response(
+                {"detail": "只有消息发送者可以删除消息"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return super().destroy(request, *args, **kwargs)
 
 
 class MessageCreateView(generics.CreateAPIView):

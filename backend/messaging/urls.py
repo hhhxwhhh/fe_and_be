@@ -10,6 +10,9 @@ urlpatterns = [
     ),
     path("messages/", views.MessageCreateView.as_view(), name="message-create"),
     path(
+        "messages/<int:pk>/", views.MessageDetailView.as_view(), name="message-detail"
+    ),
+    path(
         "messages/<int:message_id>/read/",
         views.mark_as_read,
         name="message-mark-as-read",
