@@ -55,7 +55,9 @@ class MessageDetailView(generics.RetrieveUpdateDestroyAPIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        serializer = MessageUpdateSerializer(instance, data=request.data, partial=True)
+        serializer = MessageUpdateSerializer(
+            instance, data=request.data, partial=kwargs.get("partial", False)
+        )
         if serializer.is_valid():
             updated_instance = serializer.save(is_edited=True)
             response_serializer = self.get_serializer(updated_instance)
@@ -71,6 +73,10 @@ class MessageDetailView(generics.RetrieveUpdateDestroyAPIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
         return super().destroy(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        kwargs["partial"] = True
+        return self.update(request, *args, **kwargs)
 
 
 class MessageCreateView(generics.CreateAPIView):

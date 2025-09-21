@@ -4,7 +4,8 @@ import { useMainStore } from '../store'
 import { useRoute, useRouter } from 'vue-router'
 import MessageForm from '../components/MessageForm.vue'
 import MessageItem from '../components/MessageItem.vue'
-import { authAPI, messageAPI } from '../api' 
+import { authAPI } from '../api' 
+import { messageAPI } from '../api'
 
 const store = useMainStore()
 const route = useRoute()
@@ -13,6 +14,8 @@ const router = useRouter()
 const messages = ref([])
 const recipient = ref(null)
 const loading = ref(true)
+
+// 编辑消息相关的状态
 const editingMessage = ref(null)
 const editContent = ref('')
 
@@ -164,8 +167,8 @@ const handleDeleteMessage = async (message) => {
     alert('删除消息失败')
   }
 }
-
 </script>
+
 <template>
   <div class="conversation-page">
     <div class="conversation-header">
@@ -194,7 +197,22 @@ const handleDeleteMessage = async (message) => {
         class="message-wrapper"
         :class="{ 'own-message': message?.sender?.id === (store.user?.id || 0) }"
       >
-        <MessageItem :message="message" :current-user-id="store.user?.id || 0" />
+        <!-- 编辑消息表单 -->
+        <div v-if="editingMessage && editingMessage.id === message.id" class="edit-form">
+          <textarea v-model="editContent" class="edit-textarea"></textarea>
+          <div class="edit-actions">
+            <button @click="saveEditMessage" class="save-button">保存</button>
+            <button @click="cancelEditMessage" class="cancel-button">取消</button>
+          </div>
+        </div>
+        <!-- 消息显示 -->
+        <MessageItem 
+          v-else
+          :message="message" 
+          :current-user-id="store.user?.id || 0"
+          @edit="handleEditMessage"
+          @delete="handleDeleteMessage"
+        />
       </div>
       
       <div v-if="messages.length === 0" class="no-messages">
@@ -207,6 +225,7 @@ const handleDeleteMessage = async (message) => {
     </div>
   </div>
 </template>
+
 <style scoped>
 .conversation-page {
   display: flex;
@@ -322,39 +341,47 @@ const handleDeleteMessage = async (message) => {
   justify-content: flex-end;
 }
 
-.no-messages {
-  text-align: center;
-  padding: 40px 20px;
-  color: #95a5a6;
-  font-style: italic;
-  align-self: center;
-}
-
-.message-form-container {
-  padding-top: 15px;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 12px;
+.edit-form {
+  width: 100%;
+  background: white;
+  border-radius: 10px;
   padding: 15px;
-  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-/* 滚动条样式 */
-.messages-container::-webkit-scrollbar {
-  width: 6px;
+.edit-textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 1rem;
 }
 
-.messages-container::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 10px;
+.edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
 }
 
-.messages-container::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 10px;
+.save-button, .cancel-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
 }
 
-.messages-container::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
+.save-button {
+  background-color: #42b883;
+  color: white;
+}
+
+.cancel-button {
+  background-color: #ccc;
+  color: #333;
 }
 </style>

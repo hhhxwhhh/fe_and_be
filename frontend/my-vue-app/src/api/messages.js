@@ -52,7 +52,7 @@ export const getConversations = () => {
 
 // 获取与特定用户的对话
 export const getMessages = (userId) => {
-  return api.get(`/messages/messages/${userId}/`)
+  return api.get(`/messages/users/${userId}/messages/`)
 }
 
 // 发送消息
@@ -62,7 +62,7 @@ export const sendMessage = (messageData) => {
 
 // 更新消息
 export const updateMessage = (messageId, data) => {
-  return api.patch(`/messages/messages/${messageId}/`, data)
+  return api.put(`/messages/messages/${messageId}/`, data)
 }
 
 // 删除消息
@@ -99,7 +99,7 @@ export const sendMessageWithFallback = async (messageData) => {
   }
   
   // 如果WebSocket不可用，使用HTTP API
-  return api.post('/messaging/messages/', messageData);
+  return api.post('/messages/messages/', messageData);
 };
 
 // 默认导出整个API对象
