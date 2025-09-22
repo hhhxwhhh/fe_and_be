@@ -9,6 +9,11 @@ urlpatterns = [
         "messages/<int:pk>/", views.MessageDetailView.as_view(), name="message-detail"
     ),
     path(
+        "messages/<int:pk>/revoke/",
+        views.MessageDetailView.as_view({"post": "revoke"}),
+        name="message-revoke",
+    ),
+    path(
         "users/<int:user_id>/messages/",
         views.MessageListView.as_view(),
         name="message-list",

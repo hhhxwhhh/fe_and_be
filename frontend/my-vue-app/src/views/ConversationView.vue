@@ -207,6 +207,16 @@ const cancelEditMessage = () => {
   editContent.value = ''
 }
 
+
+const handleRovokeMessage = (messageId) => {
+  const messageIndex =messages.value.findIndex(msg => msg.id ===messageId)
+  if(messageIndex!==-1){
+    messages.value[messageIndex].is_revoked=true;
+  }
+}
+
+
+
 </script>
 
 <template>
@@ -252,6 +262,7 @@ const cancelEditMessage = () => {
           :current-user-id="store.user?.id || 0"
           @edit="handleEditMessage"
           @delete="handleDeleteMessage"
+          @revoke="handleRovokeMessage"
         />
       </div>
       

@@ -2,9 +2,10 @@ from django.shortcuts import render
 from rest_framework import viewsets, generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, action
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
+from django.utils import timezone
 from .models import Message
 from accounts.models import User
 from .serializers import (
@@ -78,6 +79,43 @@ class MessageDetailView(generics.RetrieveUpdateDestroyAPIView):
     def partial_update(self, request, *args, **kwargs):
         kwargs["partial"] = True
         return self.update(request, *args, **kwargs)
+
+    # 添加撤回消息的方法
+    @action(
+        detail=True,
+        methods=["post"],
+        permission_classes=[permissions.IsAuthenticated, IsSender],
+    )
+    def revoke(self, request, pk=None):
+        message = self.get_object()
+        # 检查是否是发送者
+        if message.sender != request.user:
+            return Response(
+                {"detail": "只有消息发送者可以撤回消息"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # 检查消息是否已经撤回
+        if message.is_revoked:
+            return Response(
+                {"detail": "消息已经被撤回"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 检查消息发送时间（假设2分钟内可以撤回）
+        time_diff = timezone.now() - message.timestamp
+        if time_diff.total_seconds() > 120:  # 120秒 = 2分钟
+            return Response(
+                {"detail": "消息发送超过2分钟，无法撤回"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 标记消息为已撤回
+        message.is_revoked = True
+        message.save()
+
+        serializer = self.get_serializer(message)
+        return Response(serializer.data)
 
 
 class MessageCreateView(generics.CreateAPIView):

@@ -26,6 +26,7 @@ class MessageSerializer(serializers.ModelSerializer):
             "is_edited",
             "file",
             "image",
+            "is_rovoked",
         ]
         read_only_fields = ["sender", "timestamp", "updated_at", "is_edited"]
 

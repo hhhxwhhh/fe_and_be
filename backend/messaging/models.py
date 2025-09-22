@@ -21,6 +21,8 @@ class Message(models.Model):
     image = models.ImageField(upload_to="messages/images/", blank=True, null=True)
     file = models.FileField(upload_to="messages/file/", blank=True, null=True)
 
+    is_rovoked = models.BooleanField(default=False)
+
     class Meta:
         ordering = ["timestamp"]
 

@@ -22,6 +22,20 @@ const isOwnMessage = computed(() => {
   return props.message.sender.id === props.currentUserId
 })
 
+const canRevoke = computed(() => {
+  if (!isOwnMessage.value || props.message.is_revoked) {
+    return false
+  }
+  
+  const sendTime = new Date(props.message.timestamp)
+  const now = new Date()
+  const diffMinutes = (now - sendTime) / (1000 * 60)
+  
+  // 2分钟内可以撤回
+  return diffMinutes <= 2
+})
+
+
 const formatDate = (dateString) => {
   // 添加时间有效性验证
   if (!dateString) {
@@ -64,11 +78,30 @@ const handleEdit = () => {
 const handleDelete = () => {
   emit('delete', props.message)
 }
+
+
+const handleRevoke = async () => {
+  try {
+    await api.revokeMessage(props.message.id)
+    emit('revoke', props.message.id)
+  } catch (error) {
+    console.error('撤回消息失败:', error)
+    alert('撤回消息失败')
+  }
+}
+
+
 </script>
 
 <template>
   <div class="message-item" :class="{ 'own-message': isOwnMessage }">
     <div class="message-content">
+
+      <!-- 显示已撤回消息 -->
+      <div v-if="message.is_revoked" class="revoked-message">
+        {{ isOwnMessage ? '你撤回了一条消息' : '对方撤回了一条消息' }}
+      </div>
+
       <div v-if="message.content" class="text-content">
         {{ message.content }}
       </div>
@@ -87,6 +120,7 @@ const handleDelete = () => {
       <div class="message-meta">
         <span class="timestamp">{{ formatDate(message.timestamp) }}</span>
         <div v-if="isOwnMessage && (message.content || message.image || message.file)" class="message-actions">
+          <button v-if="canRevoke" @click="handleRevoke" class="action-btn revoke-btn">撤回</button>
           <button @click="handleEdit" class="action-btn edit-btn">编辑</button>
           <button @click="handleDelete" class="action-btn delete-btn">删除</button>
         </div>
@@ -253,13 +287,22 @@ const handleDelete = () => {
   background: rgba(245, 108, 108, 0.15);
 }
 
-.message-item.own-message .edit-btn {
+.revoke-btn {
+  color: #e6a23c;
+  background: rgba(230, 162, 60, 0.15);
+}
+
+.message-item.own-message .edit-btn,
+.message-item.own-message .delete-btn,
+.message-item.own-message .revoke-btn {
   color: white;
   background: rgba(255, 255, 255, 0.25);
 }
 
-.message-item.own-message .delete-btn {
-  color: white;
-  background: rgba(255, 255, 255, 0.25);
+.revoked-message {
+  font-style: italic;
+  opacity: 0.7;
+  text-align: center;
+  padding: 10px 0;
 }
 </style>

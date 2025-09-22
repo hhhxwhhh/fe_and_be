@@ -69,6 +69,11 @@ export const deleteMessage = (messageId) => {
   return api.delete(`/messages/messages/${messageId}/`)
 }
 
+export const revokeMessage = (messageId) => {
+  return api.post(`/messages/messages/${messageId}/revoke/`)
+}
+
+
 // 标记消息为已读
 export const markAsRead = (messageId) => {
   return api.patch(`/messages/messages/${messageId}/read/`)
