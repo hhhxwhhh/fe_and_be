@@ -22,9 +22,7 @@ const isOwnMessage = computed(() => {
   }
   
   // 兼容不同的sender格式（可能是对象或者ID）
-  const senderId = typeof props.message.sender === 'object' 
-    ? props.message.sender.id 
-    : props.message.sender
+  const senderId = typeof props.message.sender === 'object' ? props.message.sender.id : props.message.sender
     
   return senderId === props.currentUserId
 })
@@ -55,7 +53,7 @@ const canRevoke = computed(() => {
   
   // 2分钟内可以撤回 (允许少量误差)
   // 增加一个更宽松的时间窗口，确保刚发送的消息可以撤回
-  return diffMinutes >= 0 && diffMinutes <= 2.5
+  return diffMinutes >= 0 && diffMinutes <= 3
 })
 
 const formatDate = (dateString) => {
@@ -127,6 +125,13 @@ const handleDelete = () => {
 
 const handleRevoke = async () => {
   try {
+    // 确保消息ID存在
+    if (!props.message || !props.message.id) {
+      console.error('Message ID is missing')
+      alert('无法撤回消息：消息尚未完全发送或ID不存在')
+      return
+    }
+    
     await messageAPI.revokeMessage(props.message.id)
     emit('revoke', props.message.id)
   } catch (error) {
