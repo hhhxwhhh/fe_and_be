@@ -12,21 +12,86 @@ const props = defineProps({
 const emit = defineEmits(['commentAdded'])
 
 const content = ref('')
+const image = ref(null)
 const loading = ref(false)
+const error = ref('')
+
+const handleImageUpload = (event) => {
+  const file = event.target.files[0]
+  if (file) {
+    // 检查文件大小（例如限制为5MB）
+    if (file.size > 5 * 1024 * 1024) {
+      error.value = '图片大小不能超过5MB'
+      image.value = null
+      event.target.value = '' // 清空输入
+      return
+    }
+    
+    // 检查文件类型
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg']
+    if (!allowedTypes.includes(file.type)) {
+      error.value = '只支持JPEG、PNG、GIF以及JPG格式的图片'
+      image.value = null
+      event.target.value = '' // 清空输入
+      return
+    }
+    
+    image.value = file
+    error.value = ''
+  }
+}
+
+const removeImage = () => {
+  image.value = null
+  const fileInput = document.querySelector('.comment-file-input')
+  if (fileInput) fileInput.value = ''
+}
 
 const submitComment = async () => {
-  if (!content.value.trim()) return
+  if (!content.value.trim() && !image.value) {
+    error.value = '评论内容或图片不能为空'
+    return
+  }
   
   try {
     loading.value = true
-    const response = await commentAPI.createComment(props.postId, {
-      content: content.value
-    })
+    error.value = ''
+    
+    const formData = new FormData()
+    formData.append('content', content.value)
+    if (image.value) {
+      formData.append('image', image.value)
+    }
+    
+    const response = await commentAPI.createComment(props.postId, formData)
     
     emit('commentAdded', response.data)
     content.value = ''
+    image.value = null
+    
+    // 重置文件输入
+    const fileInput = document.querySelector('.comment-file-input')
+    if (fileInput) fileInput.value = ''
   } catch (error) {
     console.error('添加评论失败:', error)
+    if (error.response && error.response.data) {
+      // 显示后端返回的具体错误信息
+      if (typeof error.response.data === 'object') {
+        const errorMessages = []
+        for (const [field, messages] of Object.entries(error.response.data)) {
+          if (Array.isArray(messages)) {
+            errorMessages.push(`${field}: ${messages.join(', ')}`)
+          } else {
+            errorMessages.push(`${field}: ${messages}`)
+          }
+        }
+        error.value = errorMessages.join('; ')
+      } else {
+        error.value = error.response.data
+      }
+    } else {
+      error.value = '添加评论失败，请稍后重试'
+    }
   } finally {
     loading.value = false
   }
@@ -35,21 +100,48 @@ const submitComment = async () => {
 
 <template>
   <div class="comment-form">
+    <div v-if="error" class="error-message">
+      {{ error }}
+    </div>
+    
     <textarea 
       v-model="content"
       placeholder="添加评论..."
       rows="3"
     ></textarea>
-    <div class="form-footer">
-      <span v-if="content.length > 0" class="char-count">{{ content.length }}/500</span>
-      <button 
-        @click="submitComment"
-        :disabled="loading || !content.trim()"
-        class="submit-button"
-      >
-        <span v-if="loading" class="loading-spinner"></span>
-        {{ loading ? '提交中...' : '发布评论' }}
-      </button>
+    
+    <div class="form-actions">
+      <div class="file-upload">
+        <label class="file-label">
+          <input 
+            type="file" 
+            accept="image/*" 
+            @change="handleImageUpload"
+            class="comment-file-input"
+          />
+          <div class="file-button">
+            <span>📁 上传图片</span>
+          </div>
+        </label>
+        <div v-if="image" class="image-preview">
+          <div class="preview-container">
+            <span class="image-name">{{ image.name }}</span>
+            <button @click="removeImage" class="remove-image">×</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-footer">
+        <span v-if="content.length > 0" class="char-count">{{ content.length }}/500</span>
+        <button 
+          @click="submitComment"
+          :disabled="loading || (!content.trim() && !image)"
+          class="submit-button"
+        >
+          <span v-if="loading" class="loading-spinner"></span>
+          {{ loading ? '提交中...' : '发布评论' }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -87,6 +179,84 @@ const submitComment = async () => {
 
 .comment-form textarea::placeholder {
   color: #a0aec0;
+}
+
+.form-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.file-upload {
+  margin-bottom: 0.5rem;
+}
+
+.file-label {
+  display: block;
+  cursor: pointer;
+}
+
+.comment-file-input {
+  display: none;
+}
+
+.file-button {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: #edf2f7;
+  color: #4a5568;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  border: 1px dashed #cbd5e0;
+  font-size: 0.9rem;
+}
+
+.file-button:hover {
+  background: #e2e8f0;
+  border-color: #a0aec0;
+}
+
+.image-preview {
+  margin-top: 0.5rem;
+}
+
+.preview-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background: #f7fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.image-name {
+  font-size: 0.8rem;
+  color: #4a5568;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 80%;
+}
+
+.remove-image {
+  background: #fed7d7;
+  color: #c53030;
+  border: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 0.8rem;
+}
+
+.remove-image:hover {
+  background: #feb2b2;
 }
 
 .form-footer {
@@ -141,5 +311,15 @@ const submitComment = async () => {
   to {
     transform: rotate(360deg);
   }
+}
+
+.error-message {
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  background-color: #fff5f5;
+  color: #c53030;
+  border: 1px solid #fed7d7;
+  border-radius: 8px;
+  font-size: 0.85rem;
 }
 </style>

@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useMainStore } from '../store'
 import { postAPI, likeAPI, commentAPI, authAPI } from '../api'
 import { useRouter } from 'vue-router'
+import CommentForm from './CommentForm.vue'
 
 const props = defineProps({
   post: {
@@ -15,7 +16,6 @@ const emit = defineEmits(['postDeleted'])
 
 const store = useMainStore()
 const router = useRouter()
-const newComment = ref('')
 const showComments = ref(false)
 
 const toggleLike = async () => {
@@ -33,25 +33,14 @@ const toggleLike = async () => {
   }
 }
 
-const addComment = async () => {
-  if(!newComment.value.trim()){
-    return;
+const handleCommentAdded = (newComment) => {
+  if(!props.post.comments){
+    props.post.comments = [];
   }
-  try{
-    const response = await commentAPI.createComment(
-      props.post.id,
-      {
-        content: newComment.value
-      })
-    newComment.value = '';
-    if(!props.post.comments){
-      props.post.comments = [];
-    }
-    store.addCommentToPost(props.post.id, response.data)
-    }catch(error){
-  console.error('添加评论失败:', error)
-  }
+  //props.post.comments.push(newComment); 避免重复进行添加
+  store.addCommentToPost(props.post.id, newComment);
 }
+
 const deletePost = async () => {
   if (confirm('确定要删除这个帖子吗？')) {
     try {
@@ -91,13 +80,9 @@ const unfollowUser = async (userId) => {
   }
 }
 
-
-
 const goToUserProfile = (userId) => {
-
   router.push(`/user-profile/${userId}`)
 }
-
 </script>
 
 <template>
@@ -154,7 +139,10 @@ const goToUserProfile = (userId) => {
             <span class="comment-date">{{ new Date(comment.created_at).toLocaleDateString() }}</span>
           </div>
           <div class="comment-content">
-            {{ comment.content }}
+            <p>{{ comment.content }}</p>
+            <div v-if="comment.image" class="comment-image">
+              <img :src="comment.image" alt="Comment image" />
+            </div>
           </div>
         </div>
         <div v-if="!post.comments || post.comments.length === 0" class="no-comments">
@@ -162,20 +150,28 @@ const goToUserProfile = (userId) => {
         </div>
       </div>
       
-      <div class="add-comment">
-        <input 
-          v-model="newComment" 
-          placeholder="添加评论..." 
-          @keyup.enter="addComment"
-          class="comment-input"
-        />
-        <button @click="addComment" class="comment-button">发布</button>
-      </div>
+      <CommentForm 
+        :post-id="post.id" 
+        @comment-added="handleCommentAdded"
+      />
     </div>
   </div>
 </template>
 
 <style scoped>
+
+.comment-image {
+  margin-top: 0.5rem;
+}
+
+.comment-image img {
+  max-width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+
+
 .post-item {
   border-radius: 12px;
   padding: 1.5rem;
