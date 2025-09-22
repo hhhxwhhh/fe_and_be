@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import { messageAPI } from '../api'
 
 const props = defineProps({
   message: {
@@ -12,29 +13,50 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['edit', 'delete'])
+const emit = defineEmits(['edit', 'delete', 'revoke'])
 
 const isOwnMessage = computed(() => {
   // 确保消息和发送者存在
   if (!props.message || !props.message.sender) {
     return false
   }
-  return props.message.sender.id === props.currentUserId
+  
+  // 兼容不同的sender格式（可能是对象或者ID）
+  const senderId = typeof props.message.sender === 'object' 
+    ? props.message.sender.id 
+    : props.message.sender
+    
+  return senderId === props.currentUserId
 })
 
+// 检查消息是否可以撤回（发送后2分钟内）
 const canRevoke = computed(() => {
-  if (!isOwnMessage.value || props.message.is_revoked) {
+  // 检查基本条件
+  if (!props.message || !props.message.id || props.message.is_revoked) {
     return false
   }
   
+  // 检查是否是自己的消息
+  if (!isOwnMessage.value) {
+    return false
+  }
+  
+  // 检查时间是否在2分钟内
   const sendTime = new Date(props.message.timestamp)
   const now = new Date()
+  
+  // 确保日期有效
+  if (isNaN(sendTime.getTime())) {
+    console.warn('Invalid message timestamp:', props.message.timestamp)
+    return false
+  }
+  
   const diffMinutes = (now - sendTime) / (1000 * 60)
   
-  // 2分钟内可以撤回
-  return diffMinutes <= 2
+  // 2分钟内可以撤回 (允许少量误差)
+  // 增加一个更宽松的时间窗口，确保刚发送的消息可以撤回
+  return diffMinutes >= 0 && diffMinutes <= 2.5
 })
-
 
 const formatDate = (dateString) => {
   // 添加时间有效性验证
@@ -42,6 +64,7 @@ const formatDate = (dateString) => {
     return '未知时间'
   }
   
+  // 解析日期字符串
   const date = new Date(dateString)
   
   // 检查日期是否有效
@@ -49,7 +72,30 @@ const formatDate = (dateString) => {
     return '无效时间'
   }
   
-  return date.toLocaleTimeString([], {'year':'2-digit', 'month':'2-digit',day:'2-digit',hour: '2-digit', minute: '2-digit' })
+  // 获取当前日期用于比较
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  
+  // 如果是今天的消息，只显示时间
+  if (today.getTime() === messageDate.getTime()) {
+    // 使用本地时间格式化
+    return date.toLocaleTimeString('zh-CN', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false
+    })
+  } else {
+    // 如果不是今天，显示日期和时间
+    return date.toLocaleString('zh-CN', { 
+      year: '2-digit', 
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false
+    })
+  }
 }
 
 const getFileIcon = (filename) => {
@@ -79,47 +125,46 @@ const handleDelete = () => {
   emit('delete', props.message)
 }
 
-
 const handleRevoke = async () => {
   try {
-    await api.revokeMessage(props.message.id)
+    await messageAPI.revokeMessage(props.message.id)
     emit('revoke', props.message.id)
   } catch (error) {
     console.error('撤回消息失败:', error)
-    alert('撤回消息失败')
+    alert('撤回消息失败: ' + (error.response?.data?.detail || '未知错误'))
   }
 }
-
-
 </script>
 
 <template>
   <div class="message-item" :class="{ 'own-message': isOwnMessage }">
     <div class="message-content">
-
       <!-- 显示已撤回消息 -->
       <div v-if="message.is_revoked" class="revoked-message">
         {{ isOwnMessage ? '你撤回了一条消息' : '对方撤回了一条消息' }}
       </div>
-
-      <div v-if="message.content" class="text-content">
-        {{ message.content }}
-      </div>
       
-      <div v-if="message.image" class="image-content">
-        <img :src="message.image" alt="上传的图片" class="uploaded-image" />
-      </div>
-      
-      <div v-if="message.file" class="file-content">
-        <a :href="message.file" target="_blank" class="file-link">
-          <span class="file-icon">{{ getFileIcon(message.file) }}</span>
-          <span class="file-name">{{ message.file.split('/').pop() }}</span>
-        </a>
-      </div>
+      <!-- 正常消息内容 -->
+      <template v-else>
+        <div v-if="message.content" class="text-content">
+          {{ message.content }}
+        </div>
+        
+        <div v-if="message.image" class="image-content">
+          <img :src="message.image" alt="上传的图片" class="uploaded-image" />
+        </div>
+        
+        <div v-if="message.file" class="file-content">
+          <a :href="message.file" target="_blank" class="file-link">
+            <span class="file-icon">{{ getFileIcon(message.file) }}</span>
+            <span class="file-name">{{ message.file.split('/').pop() }}</span>
+          </a>
+        </div>
+      </template>
       
       <div class="message-meta">
         <span class="timestamp">{{ formatDate(message.timestamp) }}</span>
-        <div v-if="isOwnMessage && (message.content || message.image || message.file)" class="message-actions">
+        <div v-if="isOwnMessage && !message.is_revoked && (message.content || message.image || message.file)" class="message-actions">
           <button v-if="canRevoke" @click="handleRevoke" class="action-btn revoke-btn">撤回</button>
           <button @click="handleEdit" class="action-btn edit-btn">编辑</button>
           <button @click="handleDelete" class="action-btn delete-btn">删除</button>

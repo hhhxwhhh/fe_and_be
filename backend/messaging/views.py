@@ -30,6 +30,40 @@ class IsSender(permissions.BasePermission):
         return obj.sender == request.user
 
 
+@api_view(["POST"])
+@permission_classes([permissions.IsAuthenticated])
+def revoke_message(request, pk):
+    try:
+        message = Message.objects.get(pk=pk)
+    except Message.DoesNotExist:
+        return Response(
+            {"detail": "消息不存在"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+    if message.sender != request.user:
+        return Response(
+            {"detail": "只有消息发送者可以撤回消息"},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+    if message.is_revoked:
+        return Response(
+            {"detail": "消息已经被撤回"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    time_diff = timezone.now() - message.timestamp
+    if time_diff.total_seconds() > 120:
+        return Response(
+            {"detail": "消息发送超过2分钟，无法撤回"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    message.is_revoked = True
+    message.save()
+
+    serializer = MessageSerializer(message, context={"request": request})
+    return Response(serializer.data)
+
+
 class MessageListView(generics.ListCreateAPIView):
     serializer_class = MessageSerializer
     permission_classes = [permissions.IsAuthenticated, IsParticipant]
@@ -79,43 +113,6 @@ class MessageDetailView(generics.RetrieveUpdateDestroyAPIView):
     def partial_update(self, request, *args, **kwargs):
         kwargs["partial"] = True
         return self.update(request, *args, **kwargs)
-
-    # 添加撤回消息的方法
-    @action(
-        detail=True,
-        methods=["post"],
-        permission_classes=[permissions.IsAuthenticated, IsSender],
-    )
-    def revoke(self, request, pk=None):
-        message = self.get_object()
-        # 检查是否是发送者
-        if message.sender != request.user:
-            return Response(
-                {"detail": "只有消息发送者可以撤回消息"},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
-        # 检查消息是否已经撤回
-        if message.is_revoked:
-            return Response(
-                {"detail": "消息已经被撤回"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # 检查消息发送时间（假设2分钟内可以撤回）
-        time_diff = timezone.now() - message.timestamp
-        if time_diff.total_seconds() > 120:  # 120秒 = 2分钟
-            return Response(
-                {"detail": "消息发送超过2分钟，无法撤回"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # 标记消息为已撤回
-        message.is_revoked = True
-        message.save()
-
-        serializer = self.get_serializer(message)
-        return Response(serializer.data)
 
 
 class MessageCreateView(generics.CreateAPIView):

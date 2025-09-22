@@ -10,7 +10,7 @@ urlpatterns = [
     ),
     path(
         "messages/<int:pk>/revoke/",
-        views.MessageDetailView.as_view({"post": "revoke"}),
+        views.revoke_message,
         name="message-revoke",
     ),
     path(

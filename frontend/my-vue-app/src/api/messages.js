@@ -54,7 +54,8 @@ export const getConversations = () => {
 export const getMessages = (userId) => {
   return api.get(`/messages/users/${userId}/messages/`)
 }
-//新增实现文件上传的功能
+
+// 新增实现文件上传的功能
 export const sendMessage = (messageData) => {
   return api.post('/messages/messages/', messageData)
 }
@@ -69,10 +70,10 @@ export const deleteMessage = (messageId) => {
   return api.delete(`/messages/messages/${messageId}/`)
 }
 
+// 撤回消息
 export const revokeMessage = (messageId) => {
   return api.post(`/messages/messages/${messageId}/revoke/`)
 }
-
 
 // 标记消息为已读
 export const markAsRead = (messageId) => {
@@ -113,5 +114,6 @@ export default {
   sendMessage,
   updateMessage,
   deleteMessage,
-  markAsRead
+  markAsRead,
+  revokeMessage,
 }
