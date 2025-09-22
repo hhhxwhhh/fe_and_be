@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { messageAPI } from '../api'
 
 const props = defineProps({
@@ -15,15 +15,19 @@ const props = defineProps({
 
 const emit = defineEmits(['edit', 'delete', 'revoke'])
 
+// 控制错误提示模态框的显示
+const showErrorModal = ref(false)
+const errorMessage = ref('')
+
 const isOwnMessage = computed(() => {
   // 确保消息和发送者存在
   if (!props.message || !props.message.sender) {
     return false
   }
-  
+
   // 兼容不同的sender格式（可能是对象或者ID）
   const senderId = typeof props.message.sender === 'object' ? props.message.sender.id : props.message.sender
-    
+
   return senderId === props.currentUserId
 })
 
@@ -33,24 +37,24 @@ const canRevoke = computed(() => {
   if (!props.message || !props.message.id || props.message.is_revoked) {
     return false
   }
-  
+
   // 检查是否是自己的消息
   if (!isOwnMessage.value) {
     return false
   }
-  
+
   // 检查时间是否在2分钟内
   const sendTime = new Date(props.message.timestamp)
   const now = new Date()
-  
+
   // 确保日期有效
   if (isNaN(sendTime.getTime())) {
     console.warn('Invalid message timestamp:', props.message.timestamp)
     return false
   }
-  
+
   const diffMinutes = (now - sendTime) / (1000 * 60)
-  
+
   // 2分钟内可以撤回 (允许少量误差)
   // 增加一个更宽松的时间窗口，确保刚发送的消息可以撤回
   return diffMinutes >= 0 && diffMinutes <= 3
@@ -61,35 +65,35 @@ const formatDate = (dateString) => {
   if (!dateString) {
     return '未知时间'
   }
-  
+
   // 解析日期字符串
   const date = new Date(dateString)
-  
+
   // 检查日期是否有效
   if (isNaN(date.getTime())) {
     return '无效时间'
   }
-  
+
   // 获取当前日期用于比较
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-  
+
   // 如果是今天的消息，只显示时间
   if (today.getTime() === messageDate.getTime()) {
     // 使用本地时间格式化
-    return date.toLocaleTimeString('zh-CN', { 
-      hour: '2-digit', 
+    return date.toLocaleTimeString('zh-CN', {
+      hour: '2-digit',
       minute: '2-digit',
       hour12: false
     })
   } else {
     // 如果不是今天，显示日期和时间
-    return date.toLocaleString('zh-CN', { 
-      year: '2-digit', 
+    return date.toLocaleString('zh-CN', {
+      year: '2-digit',
       month: '2-digit',
       day: '2-digit',
-      hour: '2-digit', 
+      hour: '2-digit',
       minute: '2-digit',
       hour12: false
     })
@@ -99,10 +103,10 @@ const formatDate = (dateString) => {
 const getFileIcon = (filename) => {
   // 确保filename存在
   if (!filename) return '📎'
-  
+
   // 确保filename是字符串
   if (typeof filename !== 'string') return '📎'
-  
+
   const ext = filename.split('.').pop().toLowerCase()
   if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(ext)) {
     return '🖼️'
@@ -128,16 +132,23 @@ const handleRevoke = async () => {
     // 确保消息ID存在
     if (!props.message || !props.message.id) {
       console.error('Message ID is missing')
-      alert('无法撤回消息：消息尚未完全发送或ID不存在')
+      errorMessage.value = '无法撤回消息：消息尚未完全发送或ID不存在'
+      showErrorModal.value = true
       return
     }
-    
+
     await messageAPI.revokeMessage(props.message.id)
     emit('revoke', props.message.id)
   } catch (error) {
     console.error('撤回消息失败:', error)
-    alert('撤回消息失败: ' + (error.response?.data?.detail || '未知错误'))
+    errorMessage.value = '撤回消息失败: ' + (error.response?.data?.detail || '未知错误')
+    showErrorModal.value = true
   }
+}
+
+const closeErrorModal = () => {
+  showErrorModal.value = false
+  errorMessage.value = ''
 }
 </script>
 
@@ -148,17 +159,17 @@ const handleRevoke = async () => {
       <div v-if="message.is_revoked" class="revoked-message">
         {{ isOwnMessage ? '你撤回了一条消息' : '对方撤回了一条消息' }}
       </div>
-      
+
       <!-- 正常消息内容 -->
       <template v-else>
         <div v-if="message.content" class="text-content">
           {{ message.content }}
         </div>
-        
+
         <div v-if="message.image" class="image-content">
           <img :src="message.image" alt="上传的图片" class="uploaded-image" />
         </div>
-        
+
         <div v-if="message.file" class="file-content">
           <a :href="message.file" target="_blank" class="file-link">
             <span class="file-icon">{{ getFileIcon(message.file) }}</span>
@@ -166,24 +177,43 @@ const handleRevoke = async () => {
           </a>
         </div>
       </template>
-      
+
       <div class="message-meta">
         <span class="timestamp">{{ formatDate(message.timestamp) }}</span>
-        <div v-if="isOwnMessage && !message.is_revoked && (message.content || message.image || message.file)" class="message-actions">
+        <div v-if="isOwnMessage && !message.is_revoked && (message.content || message.image || message.file)"
+          class="message-actions">
           <button v-if="canRevoke" @click="handleRevoke" class="action-btn revoke-btn">撤回</button>
           <button @click="handleEdit" class="action-btn edit-btn">编辑</button>
           <button @click="handleDelete" class="action-btn delete-btn">删除</button>
         </div>
       </div>
     </div>
+
+    <!-- 自定义错误提示模态框 -->
+    <div v-if="showErrorModal" class="modal-overlay" @click="closeErrorModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>提示</h3>
+          <button class="modal-close" @click="closeErrorModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>{{ errorMessage }}</p>
+        </div>
+        <div class="modal-footer">
+          <button class="modal-confirm-btn" @click="closeErrorModal">确定</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
+
 <style scoped>
 .message-item {
   display: flex;
   margin-bottom: 15px;
   max-width: 85%;
   animation: messageAppear 0.3s ease-out;
+  position: relative;
 }
 
 .message-item.own-message {
@@ -196,6 +226,7 @@ const handleRevoke = async () => {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -354,5 +385,103 @@ const handleRevoke = async () => {
   opacity: 0.7;
   text-align: center;
   padding: 10px 0;
+}
+
+/* 自定义模态框样式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-width: 400px;
+  width: 90%;
+  animation: modalAppear 0.3s ease-out;
+}
+
+@keyframes modalAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #999;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.modal-close:hover {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.modal-body {
+  padding: 20px;
+  color: #666;
+  line-height: 1.6;
+}
+
+.modal-footer {
+  padding: 15px 20px;
+  text-align: right;
+  border-top: 1px solid #eee;
+}
+
+.modal-confirm-btn {
+  background: linear-gradient(135deg, #409eff, #337ecc);
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.modal-confirm-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(64, 158, 255, 0.3);
 }
 </style>
