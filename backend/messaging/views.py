@@ -86,6 +86,9 @@ class MessageCreateView(generics.CreateAPIView):
     parser_classes = [MultiPartParser, FormParser]
 
     def create(self, request, *args, **kwargs):
+        # 增加部分的调试的日志
+        print("Received request data :", request.data)
+        print("content type :", request.content_type)
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             # 检查是否尝试给自己发消息
@@ -109,6 +112,8 @@ class MessageCreateView(generics.CreateAPIView):
                 serializer.data, status=status.HTTP_201_CREATED, headers=headers
             )
         else:
+            # 打印错误信息以便调试
+            print("Message creation errors:", serializer.errors)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def perform_create(self, serializer):
