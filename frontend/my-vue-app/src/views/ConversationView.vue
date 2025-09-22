@@ -79,24 +79,52 @@ const initializeConversation = async () => {
   scrollToBottom()
 }
 
+// 添加判断是否为自己发送的消息的方法
+const isOwnMessage = (message) => {
+  if (!message || !message.sender) return false
+  const currentUserId = store.user?.id || 0
+  return message.sender.id === currentUserId
+}
+
 const scrollToBottom = () => {
   nextTick(() => {
     const container = document.querySelector('.messages-container')
     if (container) {
-      container.scrollTop = container.scrollHeight
+      // 平滑滚动到底部
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'smooth'
+      })
     }
   })
 }
-
-const handleNewMessage = async (content) => {
+const handleNewMessage = async (formData) => {
   const userId = parseInt(route.params.userId)
   if (isNaN(userId)) return;
   
   try {
-    // 发送消息并获取返回的结果
-    const newMessage = await store.sendMessage(userId, content)
+    // 添加接收者ID到表单数据
+    if (!formData.has('recipient')) {
+      formData.append('recipient', userId)
+    }
     
-    // 更新本地消息列表（如果需要）
+    // 发送消息并获取返回的结果
+    const response = await messageAPI.sendMessage(formData)
+    let newMessage = response.data
+    
+    
+    if (!newMessage.sender || typeof newMessage.sender === 'number') {
+      newMessage.sender = {
+        id: store.user.id,
+        username: store.user.username,
+        avatar: store.user.avatar
+      }
+    }
+    if (!newMessage.timestamp) {
+      newMessage.timestamp = new Date().toISOString()
+    }
+    
+    // 更新本地消息列表
     if (newMessage && typeof newMessage === 'object') {
       // 检查消息是否已经存在于列表中
       const existingMessageIndex = messages.value.findIndex(msg => msg.id === newMessage.id)
@@ -105,29 +133,35 @@ const handleNewMessage = async (content) => {
         // 如果已存在，更新它
         messages.value[existingMessageIndex] = newMessage
       } else {
-        // 如果不存在，添加到列表
+        // 如果不存在，添加到列表末尾
         messages.value.push(newMessage)
       }
       
-      scrollToBottom()
+      // 强制 Vue 重新渲染以应用新样式
+      messages.value = [...messages.value]
+      
+      // 确保在下次DOM更新后滚动到底部
+      nextTick(() => {
+        scrollToBottom()
+      })
     }
   } catch (error) {
-    console.error('发送消息失败:', error)
+    // ... 错误处理保持不变 ...
   }
 }
-
 const handleEditMessage = (message) => {
   editingMessage.value = message
   editContent.value = message.content
 }
 
 const saveEditMessage = async () => {
-  if (!editingMessage.value) return
+  if (!editingMessage.value || !editingMessage.value.id) return
   
   try {
-    const response = await messageAPI.updateMessage(editingMessage.value.id, {
-      content: editContent.value
-    })
+    const formData = new FormData()
+    formData.append('content', editContent.value)
+    
+    const response = await messageAPI.updateMessage(editingMessage.value.id, formData)
     
     // 更新本地消息列表
     const index = messages.value.findIndex(msg => msg.id === editingMessage.value.id)
@@ -144,12 +178,12 @@ const saveEditMessage = async () => {
   }
 }
 
-const cancelEditMessage = () => {
-  editingMessage.value = null
-  editContent.value = ''
-}
-
 const handleDeleteMessage = async (message) => {
+  if (!message || !message.id) {
+    alert('无效的消息')
+    return
+  }
+  
   if (!confirm('确定要删除这条消息吗？')) {
     return
   }
@@ -167,6 +201,12 @@ const handleDeleteMessage = async (message) => {
     alert('删除消息失败')
   }
 }
+
+const cancelEditMessage = () => {
+  editingMessage.value = null
+  editContent.value = ''
+}
+
 </script>
 
 <template>
@@ -195,7 +235,7 @@ const handleDeleteMessage = async (message) => {
         v-for="(message, index) in messages" 
         :key="message?.id || index"
         class="message-wrapper"
-        :class="{ 'own-message': message?.sender?.id === (store.user?.id || 0) }"
+        :class="{ 'own-message': isOwnMessage(message) }"
       >
         <!-- 编辑消息表单 -->
         <div v-if="editingMessage && editingMessage.id === message.id" class="edit-form">
@@ -225,7 +265,6 @@ const handleDeleteMessage = async (message) => {
     </div>
   </div>
 </template>
-
 <style scoped>
 .conversation-page {
   display: flex;
@@ -243,14 +282,18 @@ const handleDeleteMessage = async (message) => {
 .conversation-header {
   display: flex;
   align-items: center;
-  padding-bottom: 15px;
+  padding: 15px 20px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   margin-bottom: 15px;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.85);
   border-radius: 12px;
-  padding: 15px;
   backdrop-filter: blur(10px);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.conversation-header:hover {
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
 }
 
 .back-button {
@@ -279,6 +322,7 @@ const handleDeleteMessage = async (message) => {
 .recipient-info {
   display: flex;
   align-items: center;
+  flex: 1;
 }
 
 .recipient-avatar img {
@@ -289,6 +333,11 @@ const handleDeleteMessage = async (message) => {
   margin-right: 15px;
   border: 3px solid #fff;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.recipient-avatar img:hover {
+  transform: scale(1.05);
 }
 
 .avatar-placeholder {
@@ -305,12 +354,18 @@ const handleDeleteMessage = async (message) => {
   border: 3px solid #fff;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   font-size: 1.2rem;
+  transition: all 0.3s ease;
+}
+
+.avatar-placeholder:hover {
+  transform: scale(1.05);
 }
 
 .recipient-name {
   font-weight: 600;
   font-size: 1.3rem;
   color: #2c3e50;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .loading {
@@ -318,70 +373,134 @@ const handleDeleteMessage = async (message) => {
   padding: 20px;
   color: #7f8c8d;
   font-style: italic;
+  font-size: 1.1rem;
 }
 
 .messages-container {
   flex: 1;
   overflow-y: auto;
-  padding: 20px 10px;
+  padding: 20px 15px;
   display: flex;
   flex-direction: column;
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.6);
   border-radius: 12px;
   margin-bottom: 15px;
   backdrop-filter: blur(5px);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
+  scrollbar-width: thin;
+  scrollbar-color: #409eff #e0e0e0;
+}
+
+.messages-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.messages-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.messages-container::-webkit-scrollbar-thumb {
+  background: #409eff;
+  border-radius: 10px;
+}
+
+.messages-container::-webkit-scrollbar-thumb:hover {
+  background: #337ecc;
 }
 
 .message-wrapper {
   display: flex;
   margin-bottom: 15px;
+  animation: fadeIn 0.3s ease-out;
 }
 
 .message-wrapper.own-message {
   justify-content: flex-end;
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .edit-form {
   width: 100%;
   background: white;
-  border-radius: 10px;
-  padding: 15px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .edit-textarea {
   width: 100%;
-  min-height: 80px;
-  padding: 10px;
+  min-height: 100px;
+  padding: 12px;
   border: 1px solid #ddd;
-  border-radius: 5px;
+  border-radius: 8px;
   resize: vertical;
   font-family: inherit;
   font-size: 1rem;
+  margin-bottom: 15px;
+  transition: border-color 0.3s ease;
+}
+
+.edit-textarea:focus {
+  outline: none;
+  border-color: #409eff;
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
 }
 
 .edit-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 12px;
 }
 
 .save-button, .cancel-button {
-  padding: 8px 16px;
+  padding: 10px 20px;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
-  font-weight: bold;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .save-button {
-  background-color: #42b883;
+  background: linear-gradient(135deg, #42b883, #3498db);
   color: white;
 }
 
+.save-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(66, 184, 131, 0.3);
+}
+
 .cancel-button {
-  background-color: #ccc;
-  color: #333;
+  background: #f5f5f5;
+  color: #666;
+}
+
+.cancel-button:hover {
+  background: #e0e0e0;
+  transform: translateY(-2px);
+}
+
+.no-messages {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+  font-style: italic;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 10px;
+  margin: auto;
 }
 </style>

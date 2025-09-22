@@ -50,7 +50,7 @@ const openConversation = async (userId) => {
         </div>
         <div class="conversation-info">
           <div class="user-name">{{ conversation.user?.username || '未知用户' }}</div>
-          <div class="last-message">{{ conversation.last_message?.content || '无消息' }}</div>
+          <div class="last-message">{{ conversation.last_message?.content || '暂无新消息' }}</div>
         </div>
         <div class="conversation-meta">
           <div class="timestamp">

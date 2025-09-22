@@ -54,15 +54,14 @@ export const getConversations = () => {
 export const getMessages = (userId) => {
   return api.get(`/messages/users/${userId}/messages/`)
 }
-
-// 发送消息
+//新增实现文件上传的功能
 export const sendMessage = (messageData) => {
   return api.post('/messages/messages/', messageData)
 }
 
 // 更新消息
 export const updateMessage = (messageId, data) => {
-  return api.put(`/messages/messages/${messageId}/`, data)
+  return api.patch(`/messages/messages/${messageId}/`, data)
 }
 
 // 删除消息

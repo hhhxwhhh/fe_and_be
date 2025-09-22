@@ -1,5 +1,5 @@
 <script setup>
-
+import { computed } from 'vue'
 
 const props = defineProps({
   message: {
@@ -8,66 +8,53 @@ const props = defineProps({
   },
   currentUserId: {
     type: Number,
-    default: 0
+    required: true
   }
 })
 
 const emit = defineEmits(['edit', 'delete'])
 
-// 判断是否为自己发送的消息
 const isOwnMessage = computed(() => {
-  if (!props.message || !props.message.sender) return false
+  // 确保消息和发送者存在
+  if (!props.message || !props.message.sender) {
+    return false
+  }
   return props.message.sender.id === props.currentUserId
 })
 
-// 格式化时间显示
-const formatTime = (timestamp) => {
-  if (!timestamp) return 'Invalid Date'
-  
-  try {
-    // 尝试不同的时间格式
-    let date
-    if (typeof timestamp === 'string') {
-      // 如果是ISO字符串，直接使用
-      if (timestamp.includes('T')) {
-        date = new Date(timestamp)
-      } else {
-        // 尝试解析其他格式
-        date = new Date(timestamp.replace(' ', 'T'))
-      }
-    } else if (timestamp instanceof Date) {
-      date = timestamp
-    } else {
-      // 如果是时间戳数字
-      date = new Date(timestamp)
-    }
-    
-    if (isNaN(date.getTime())) {
-      return 'Invalid Date'
-    }
-    
-    return date.toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    })
-  } catch (e) {
-    console.error('时间格式化错误:', e)
-    return 'Invalid Date'
+const formatDate = (dateString) => {
+  // 添加时间有效性验证
+  if (!dateString) {
+    return '未知时间'
   }
+  
+  const date = new Date(dateString)
+  
+  // 检查日期是否有效
+  if (isNaN(date.getTime())) {
+    return '无效时间'
+  }
+  
+  return date.toLocaleTimeString([], {'year':'2-digit', 'month':'2-digit',day:'2-digit',hour: '2-digit', minute: '2-digit' })
 }
 
-// 安全地获取消息内容
-const getMessageContent = (message) => {
-  if (!message || typeof message !== 'object') return ''
-  if (!message.content) return ''
-  // 确保内容是字符串类型
-  if (typeof message.content !== 'string') return String(message.content)
-  return message.content
+const getFileIcon = (filename) => {
+  // 确保filename存在
+  if (!filename) return '📎'
+  
+  // 确保filename是字符串
+  if (typeof filename !== 'string') return '📎'
+  
+  const ext = filename.split('.').pop().toLowerCase()
+  if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(ext)) {
+    return '🖼️'
+  } else if (['pdf'].includes(ext)) {
+    return '📄'
+  } else if (['doc', 'docx'].includes(ext)) {
+    return '📝'
+  } else {
+    return '📎'
+  }
 }
 
 const handleEdit = () => {
@@ -77,44 +64,42 @@ const handleEdit = () => {
 const handleDelete = () => {
   emit('delete', props.message)
 }
-
-import { computed } from 'vue'
 </script>
 
 <template>
-  <div 
-    class="message-item"
-    :class="{ 'own-message': isOwnMessage }"
-  >
+  <div class="message-item" :class="{ 'own-message': isOwnMessage }">
     <div class="message-content">
-      <div class="message-sender" v-if="!isOwnMessage && message.sender">
-        {{ message.sender.username }}
+      <div v-if="message.content" class="text-content">
+        {{ message.content }}
       </div>
-      <div class="message-text">
-        {{ getMessageContent(message) }}
-        <span v-if="message.is_edited" class="edited-label">(已编辑)</span>
+      
+      <div v-if="message.image" class="image-content">
+        <img :src="message.image" alt="上传的图片" class="uploaded-image" />
       </div>
-      <div class="message-time">
-        {{ formatTime(message.timestamp) }}
-        <span v-if="message.updated_at && message.updated_at !== message.timestamp">
-          (编辑于 {{ formatTime(message.updated_at) }})
-        </span>
+      
+      <div v-if="message.file" class="file-content">
+        <a :href="message.file" target="_blank" class="file-link">
+          <span class="file-icon">{{ getFileIcon(message.file) }}</span>
+          <span class="file-name">{{ message.file.split('/').pop() }}</span>
+        </a>
       </div>
-      <div v-if="isOwnMessage" class="message-actions">
-        <button @click="handleEdit" class="action-button edit-button">编辑</button>
-        <button @click="handleDelete" class="action-button delete-button">删除</button>
+      
+      <div class="message-meta">
+        <span class="timestamp">{{ formatDate(message.timestamp) }}</span>
+        <div v-if="isOwnMessage && (message.content || message.image || message.file)" class="message-actions">
+          <button @click="handleEdit" class="action-btn edit-btn">编辑</button>
+          <button @click="handleDelete" class="action-btn delete-btn">删除</button>
+        </div>
       </div>
     </div>
   </div>
 </template>
-
 <style scoped>
 .message-item {
   display: flex;
   margin-bottom: 15px;
-  max-width: 80%;
-  animation: fadeIn 0.3s ease-out;
-  position: relative;
+  max-width: 85%;
+  animation: messageAppear 0.3s ease-out;
 }
 
 .message-item.own-message {
@@ -122,119 +107,7 @@ import { computed } from 'vue'
   margin-left: auto;
 }
 
-.message-content {
-  background-color: #f0f8ff;
-  border-radius: 18px;
-  padding: 12px 15px;
-  position: relative;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease;
-}
-
-.message-content:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
-}
-
-.message-item.own-message .message-content {
-  background-color: #42b883;
-  color: white;
-}
-
-.message-sender {
-  font-weight: bold;
-  font-size: 0.9rem;
-  margin-bottom: 5px;
-  color: #2c3e50;
-}
-
-.message-item.own-message .message-sender {
-  color: #fff;
-  opacity: 0.9;
-}
-
-.message-text {
-  word-wrap: break-word;
-  line-height: 1.5;
-  font-size: 1rem;
-}
-
-.edited-label {
-  font-size: 0.8rem;
-  opacity: 0.7;
-  margin-left: 5px;
-}
-
-.message-time {
-  font-size: 0.7rem;
-  text-align: right;
-  margin-top: 8px;
-  color: #7f8c8d;
-  font-style: italic;
-}
-
-.message-item.own-message .message-time {
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.message-actions {
-  display: flex;
-  gap: 5px;
-  margin-top: 8px;
-  justify-content: flex-end;
-}
-
-.action-button {
-  padding: 4px 8px;
-  font-size: 0.7rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  opacity: 0.8;
-  transition: opacity 0.2s;
-}
-
-.action-button:hover {
-  opacity: 1;
-}
-
-.edit-button {
-  background-color: #3498db;
-  color: white;
-}
-
-.delete-button {
-  background-color: #e74c3c;
-  color: white;
-}
-
-/* 添加消息气泡的尖角效果 */
-.message-item:not(.own-message) .message-content::before {
-  content: '';
-  position: absolute;
-  left: -8px;
-  top: 12px;
-  width: 0;
-  height: 0;
-  border-top: 6px solid transparent;
-  border-bottom: 6px solid transparent;
-  border-right: 8px solid #f0f8ff;
-}
-
-.message-item.own-message .message-content::before {
-  content: '';
-  position: absolute;
-  right: -8px;
-  top: 12px;
-  width: 0;
-  height: 0;
-  border-top: 6px solid transparent;
-  border-bottom: 6px solid transparent;
-  border-left: 8px solid #42b883;
-}
-
-/* 添加淡入动画 */
-@keyframes fadeIn {
+@keyframes messageAppear {
   from {
     opacity: 0;
     transform: translateY(10px);
@@ -245,14 +118,148 @@ import { computed } from 'vue'
   }
 }
 
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .message-item {
-    max-width: 90%;
-  }
-  
-  .message-text {
-    font-size: 0.9rem;
-  }
+.message-content {
+  background: white;
+  padding: 15px;
+  border-radius: 18px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.message-item.own-message .message-content {
+  background: linear-gradient(135deg, #409eff, #337ecc);
+  color: white;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+}
+
+.message-content:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.message-item.own-message .message-content:hover {
+  box-shadow: 0 6px 15px rgba(64, 158, 255, 0.4);
+}
+
+.text-content {
+  margin-bottom: 12px;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  line-height: 1.5;
+  font-size: 1rem;
+}
+
+.image-content {
+  margin-bottom: 12px;
+}
+
+.uploaded-image {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 12px;
+  display: block;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.uploaded-image:hover {
+  transform: scale(1.02);
+}
+
+.file-content {
+  margin-bottom: 12px;
+}
+
+.file-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 15px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.message-item.own-message .file-link {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.file-link:hover {
+  background: rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.message-item.own-message .file-link:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.file-icon {
+  font-size: 20px;
+}
+
+.file-name {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.message-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #999;
+  margin-top: 5px;
+}
+
+.message-item.own-message .message-meta {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.message-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  opacity: 0.8;
+}
+
+.action-btn:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.edit-btn {
+  color: #409eff;
+  background: rgba(64, 158, 255, 0.15);
+}
+
+.delete-btn {
+  color: #f56c6c;
+  background: rgba(245, 108, 108, 0.15);
+}
+
+.message-item.own-message .edit-btn {
+  color: white;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.message-item.own-message .delete-btn {
+  color: white;
+  background: rgba(255, 255, 255, 0.25);
 }
 </style>
