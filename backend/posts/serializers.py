@@ -10,8 +10,22 @@ class CommentSeralizers(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ("id", "author", "content", "created_at")
+        fields = ("id", "author", "content", "image", "created_at")
         read_only_fields = ("id", "author", "created_at")
+
+        extra_kwargs = {"content": {"required": False, "allow_blank": True}}
+
+    def validate(self, data):
+        if not (data.get("content", "").strip() or data.get("image")):
+            raise serializers.ValidationError("评论不能完全为空")
+        return data
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        request = self.context.get("request")
+        if instance.image and request:
+            representation["image"] = request.build_absolute_uri(instance.image.url)
+        return representation
 
 
 class PostSeralizers(serializers.ModelSerializer):
@@ -53,3 +67,10 @@ class PostSeralizers(serializers.ModelSerializer):
         if request and hasattr(request, "user") and request.user.is_authenticated:
             return request.user.following.filter(id=obj.author.id).exists()
         return False
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        request = self.context.get("request")
+        if instance.image and request:
+            representation["image"] = request.build_absolute_uri(instance.image.url)
+        return representation

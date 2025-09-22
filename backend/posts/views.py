@@ -95,10 +95,25 @@ class PostDetailView(APIView):
 
 
 class CommentView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
+
     def post(self, request, pk):
         try:
             post = Post.objects.get(pk=pk)
-            serializer = CommentSeralizers(data=request.data)
+            # 检查是否至少提供了内容或图片
+            content = request.data.get("content", "").strip()
+            image = request.FILES.get("image")
+
+            if not content and not image:
+                return Response(
+                    {"content": "评论内容或图片不能为空"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            serializer = CommentSeralizers(
+                data=request.data, context={"request": request}
+            )
             if serializer.is_valid():
                 comment = serializer.save(author=request.user, post=post)
                 if post.author != request.user:
