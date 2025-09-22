@@ -18,6 +18,9 @@ class Message(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     is_edited = models.BooleanField(default=False)
 
+    image = models.ImageField(upload_to="messages/images/", blank=True, null=True)
+    file = models.FileField(upload_to="messages/file/", blank=True, null=True)
+
     class Meta:
         ordering = ["timestamp"]
 

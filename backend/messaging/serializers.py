@@ -24,6 +24,8 @@ class MessageSerializer(serializers.ModelSerializer):
             "is_read",
             "updated_at",
             "is_edited",
+            "file",
+            "image",
         ]
         read_only_fields = ["sender", "timestamp", "updated_at", "is_edited"]
 
@@ -31,10 +33,10 @@ class MessageSerializer(serializers.ModelSerializer):
 class MessageCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Message
-        fields = ["recipient", "content"]
+        fields = ["recipient", "content", "file", "image"]
 
 
 class MessageUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Message
-        fields = ["content"]
+        fields = ["content", "image", "file"]
