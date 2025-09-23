@@ -4,7 +4,7 @@ import { RouterView, useRouter, useRoute } from 'vue-router'
 import { useMainStore } from './store'
 import { authAPI } from './api'
 import { ElContainer, ElHeader, ElMain, ElMenu, ElMenuItem, ElIcon, ElAvatar, ElDropdown, ElDropdownMenu, ElDropdownItem } from 'element-plus'
-import { HomeFilled, UserFilled, Edit, SwitchButton, Bell, ChatDotRound } from '@element-plus/icons-vue'
+import { HomeFilled, UserFilled, Edit, SwitchButton, Bell, ChatDotRound, Phone } from '@element-plus/icons-vue'
 import NotificationBell from './components/NotificationBell.vue'
 import websocket from './services/websocket'
 const store = useMainStore()
@@ -18,7 +18,7 @@ watch(() => store.user, (newUser) => {
   if (newUser) {
     store.initWebSocket()
   } else {
-    
+
     websocket.disconnect()
   }
 })
@@ -38,7 +38,7 @@ watch(() => route.path, (newPath) => {
 const handleSelect = (key) => {
   activeIndex.value = key
   // 根据菜单项跳转到相应页面
-  switch(key) {
+  switch (key) {
     case '/':
       router.push('/')
       break
@@ -47,6 +47,9 @@ const handleSelect = (key) => {
       break
     case '/messages':
       router.push('/messages')
+      break
+    case '/contacts':
+      router.push('/contacts')
       break
     case '/login':
       router.push('/login')
@@ -85,7 +88,7 @@ onMounted(async () => {
       store.setUser(null)
     }
   }
-  
+
   // 如果用户已登录，获取未读通知数
   if (store.user) {
     store.fetchUnreadNotificationCount()
@@ -97,78 +100,87 @@ onMounted(async () => {
   <el-container id="app">
     <el-header class="header">
       <div class="header-container">
-        <!-- 左侧导航 -->
         <div class="nav-left">
-          <img src="../public/xw_chat.svg" class="logo"></img>
-          <div class="nav-brand">
-            <h2>Social Network</h2>
+          <div class="logo-container">
+            <img src="../public/xw_chat.svg" class="logo"></img>
+            <div class="nav-brand">
+              <h2>Social Network</h2>
+            </div>
           </div>
 
-          
-          <el-menu
-            :default-active="activeIndex"
-            mode="horizontal"
-            @select="handleSelect"
-            class="nav-menu"
-          >
-            <el-menu-item index="/"> 
-              <el-icon><HomeFilled /></el-icon>
+          <el-menu :default-active="activeIndex" mode="horizontal" @select="handleSelect" class="nav-menu"
+            :ellipsis="false">
+            <el-menu-item index="/">
+              <el-icon class="nav-icon">
+                <HomeFilled />
+              </el-icon>
               <span class="menu-text">首页</span>
             </el-menu-item>
-            
+
             <el-menu-item index="/forum">
-              <el-icon><Edit /></el-icon>
+              <el-icon class="nav-icon">
+                <Edit />
+              </el-icon>
               <span class="menu-text">论坛</span>
-            </el-menu-item>
-            
-            <el-menu-item index="/profile">
-              <el-icon><UserFilled /></el-icon>
-              <span class="menu-text">个人中心</span>
             </el-menu-item>
           </el-menu>
         </div>
-        
-        <!-- 右侧用户操作 -->
+
         <div class="nav-right">
           <template v-if="store.user">
-            <!-- 消息通知 -->
-            <NotificationBell />
-            
-            <!-- 私信入口 -->
-            <div class="messages-icon" @click="() => router.push('/messages')">
-              <el-icon><ChatDotRound /></el-icon>
+            <!-- 消息 -->
+            <div class="nav-icon-button" @click="() => router.push('/messages')">
+              <div class="icon-wrapper">
+                <el-icon class="button-icon">
+                  <ChatDotRound />
+                </el-icon>
+              </div>
+              <span class="icon-text">消息</span>
             </div>
-            
+
+            <!-- 联系人 -->
+            <div class="nav-icon-button" @click="() => router.push('/contacts')">
+              <div class="icon-wrapper">
+                <el-icon class="button-icon">
+                  <Phone />
+                </el-icon>
+              </div>
+              <span class="icon-text">联系人</span>
+            </div>
+
+            <!-- 通知 -->
+            <NotificationBell />
+
             <!-- 用户菜单 -->
             <el-dropdown class="user-dropdown">
               <div class="user-info">
-                <el-avatar :size="30" :src="store.user.avatar || ''" class="user-avatar">
+                <el-avatar :size="32" :src="store.user.avatar || ''" class="user-avatar">
                   {{ store.user.username?.charAt(0)?.toUpperCase() }}
                 </el-avatar>
                 <span class="username">{{ store.user.username }}</span>
               </div>
-              
+
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item @click="() => router.push(`/profile/${store.user.id}`)">
-                    <el-icon><UserFilled /></el-icon>
+                    <el-icon>
+                      <UserFilled />
+                    </el-icon>
                     个人资料
                   </el-dropdown-item>
                   <el-dropdown-item @click="logout">
-                    <el-icon><SwitchButton /></el-icon>
+                    <el-icon>
+                      <SwitchButton />
+                    </el-icon>
                     退出登录
                   </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
           </template>
-          
+
           <template v-else>
-            <el-menu
-              mode="horizontal"
-              @select="handleSelect"
-              class="auth-menu"
-            >
+            <el-menu mode="horizontal" @select="handleSelect" class="auth-menu" :ellipsis="false">
               <el-menu-item index="/login">
                 登录
               </el-menu-item>
@@ -180,7 +192,7 @@ onMounted(async () => {
         </div>
       </div>
     </el-header>
-    
+
     <el-main>
       <RouterView />
     </el-main>
@@ -189,7 +201,7 @@ onMounted(async () => {
 
 <style scoped>
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
@@ -198,150 +210,174 @@ onMounted(async () => {
 
 .header {
   padding: 0;
-  box-shadow: 0 2px 4px rgba(0,0,0,.1);
-  background-color: #4CAF50;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .header-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 50px;
-  padding: 0 10px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+  height: 64px;
 }
 
 .nav-left {
   display: flex;
   align-items: center;
+  gap: 30px;
   flex-shrink: 0;
-  flex: 1;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .logo {
-  height: 30px;
-  width: auto;
-  margin-right: 10px;
-}
-
-.nav-brand {
-  color: white;
-  padding: 0 1rem;
-  white-space: nowrap;
+  height: 36px;
 }
 
 .nav-brand h2 {
   margin: 0;
-  font-size: 1.2rem;
+  color: white;
+  font-size: 1.3rem;
+  font-weight: 600;
 }
 
 .nav-menu {
-  display: flex;
-  align-items: center;
-  background-color: transparent !important;
   border: none !important;
-  flex: 1;
+  background: transparent !important;
 }
 
 .nav-menu :deep(.el-menu-item) {
+  height: 64px;
+  line-height: 64px;
+  border: none !important;
   display: flex;
   align-items: center;
-  height: 50px;
-  line-height: 50px;
+  padding: 0 20px !important;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-weight: 500;
+  border-radius: 8px;
   margin: 0 5px;
-  border-bottom: none !important;
-  color: white !important;
-  padding: 0 15px !important;
-}
-
-.nav-menu :deep(.el-menu-item.is-active) {
-  color: #ffd04b !important;
+  transition: all 0.3s ease;
 }
 
 .nav-menu :deep(.el-menu-item:hover) {
-  background-color: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+}
+
+.nav-menu :deep(.el-menu-item.is-active) {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+}
+
+.nav-icon {
+  font-size: 16px;
+  margin-right: 8px;
+  width: 16px;
+  height: 16px;
 }
 
 .nav-right {
   display: flex;
   align-items: center;
-  height: 100%;
+  gap: 15px;
   flex-shrink: 0;
 }
 
-.auth-menu {
+.nav-icon-button {
   display: flex;
   align-items: center;
-  background-color: transparent !important;
-  border: none !important;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
-.auth-menu :deep(.el-menu-item) {
-  display: flex;
-  align-items: center;
-  height: 50px;
-  line-height: 50px;
-  border-bottom: none !important;
-  padding: 0 10px;
-  color: white !important;
+.nav-icon-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+  border-radius: 20px;
 }
 
-.auth-menu :deep(.el-menu-item:hover) {
-  background-color: rgba(255, 255, 255, 0.1) !important;
+.nav-icon-button:hover {
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.messages-icon {
+.nav-icon-button:hover::before {
+  opacity: 1;
+}
+
+.nav-icon-button:active {
+  transform: translateY(0);
+  transition: all 0.1s ease;
+}
+
+.icon-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
-  padding: 0 15px;
-  cursor: pointer;
-  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.nav-icon-button:hover .icon-wrapper {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.button-icon {
   font-size: 18px;
   transition: all 0.3s ease;
-  position: relative;
-  border-radius: 4px;
 }
 
-.messages-icon:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.messages-icon:active {
-  transform: translateY(0);
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.user-dropdown {
-  height: 100%;
+.nav-icon-button:hover .button-icon {
+  transform: scale(1.2);
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  height: 100%;
-  padding: 0 1rem;
   cursor: pointer;
-  color: white;
-  transition: all 0.3s ease;
-  border-radius: 4px;
+  gap: 10px;
+  padding: 4px 8px;
+  border-radius: 20px;
+  transition: background 0.3s ease;
 }
 
 .user-info:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.user-info:active {
-  transform: translateY(0);
-  background-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .user-avatar {
-  background-color: #c0c4cc;
+  background: linear-gradient(135deg, #42b883, #3498db);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   transition: all 0.3s ease;
 }
 
@@ -350,51 +386,70 @@ onMounted(async () => {
 }
 
 .username {
-  margin-left: 8px;
   font-weight: 500;
-  white-space: nowrap;
+  color: white;
+  font-size: 14px;
+}
+
+.auth-menu {
+  border: none !important;
+  background: transparent !important;
+}
+
+.auth-menu :deep(.el-menu-item) {
+  height: 64px;
+  line-height: 64px;
+  border: none !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-weight: 500;
+  padding: 0 15px !important;
+  border-radius: 8px;
+  margin: 0 5px;
   transition: all 0.3s ease;
 }
 
-.user-info:hover .username {
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
-}
-
-.menu-text {
-  margin-left: 5px;
+.auth-menu :deep(.el-menu-item:hover) {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
 }
 
 @media (max-width: 768px) {
-  .nav-brand h2 {
-    font-size: 1rem;
+  .header-container {
+    padding: 0 15px;
   }
-  
+
+  .nav-brand h2 {
+    font-size: 1.1rem;
+  }
+
+  .nav-menu :deep(.el-menu-item) {
+    padding: 0 12px !important;
+    font-size: 14px;
+  }
+
+  .nav-icon {
+    margin-right: 4px;
+  }
+
+  .nav-icon-button .icon-text {
+    display: none;
+  }
+
+  .nav-icon-button {
+    padding: 6px 8px;
+  }
+
+  .icon-wrapper {
+    width: 28px;
+    height: 28px;
+  }
+
   .username {
     display: none;
   }
-  
-  .menu-text {
-    display: inline !important;
-  }
-  
-  .nav-menu :deep(.el-menu-item .el-icon) {
-    margin-right: 0;
-  }
-  
-  .nav-menu :deep(.el-menu-item) {
-    padding: 0 10px !important;
-  }
-  
-  .nav-menu :deep(.el-menu-item span) {
-    display: none;
-  }
-  
-  .nav-menu :deep(.el-menu-item .menu-text) {
-    display: inline !important;
-  }
-  
-  .messages-icon {
-    padding: 0 10px;
+
+  .user-info {
+    gap: 5px;
   }
 }
 </style>

@@ -12,7 +12,7 @@ let notificationInterval = null
 onMounted(async () => {
   if (store.user) {
     await store.fetchUnreadNotificationCount()
-    
+
     // 每30秒检查一次新通知
     notificationInterval = setInterval(() => {
       store.fetchUnreadNotificationCount()
@@ -58,7 +58,7 @@ const getTimeAgo = (dateString) => {
   const date = new Date(dateString)
   const now = new Date()
   const seconds = Math.floor((now - date) / 1000)
-  
+
   if (seconds < 60) return '刚刚'
   if (seconds < 3600) return `${Math.floor(seconds / 60)}分钟前`
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}小时前`
@@ -74,33 +74,25 @@ const getTimeAgo = (dateString) => {
         {{ store.unreadNotificationsCount > 99 ? '99+' : store.unreadNotificationsCount }}
       </span>
     </button>
-    
+
     <transition name="slide-fade">
       <div v-if="showNotifications" class="notifications-dropdown">
         <div class="notifications-header">
           <h3>通知</h3>
-          <button 
-            v-if="store.notifications.some(n => !n.is_read)" 
-            @click="markAllAsRead"
-            class="mark-all-read"
-          >
+          <button v-if="store.notifications.some(n => !n.is_read)" @click="markAllAsRead" class="mark-all-read">
             全部标记为已读
           </button>
         </div>
-        
+
         <div v-if="store.notifications.length === 0" class="no-notifications">
           <div class="empty-icon">🔔</div>
           <p>暂无通知</p>
           <span>当有人与您互动时，您会在这里看到通知</span>
         </div>
-        
+
         <div v-else class="notifications-list">
-          <div 
-            v-for="notification in store.notifications" 
-            :key="notification.id"
-            :class="['notification-item', { unread: !notification.is_read }]"
-            @click="markAsRead(notification.id)"
-          >
+          <div v-for="notification in store.notifications" :key="notification.id"
+            :class="['notification-item', { unread: !notification.is_read }]" @click="markAsRead(notification.id)">
             <div class="notification-avatar">
               <div class="avatar-placeholder">
                 {{ notification.actor.charAt(0).toUpperCase() }}
@@ -115,7 +107,7 @@ const getTimeAgo = (dateString) => {
             </div>
           </div>
         </div>
-        
+
         <div v-if="store.notifications.length > 0" class="notifications-footer">
           <button @click="showNotifications = false" class="close-button">
             关闭
@@ -123,7 +115,7 @@ const getTimeAgo = (dateString) => {
         </div>
       </div>
     </transition>
-    
+
     <div v-if="showNotifications" class="overlay" @click="showNotifications = false"></div>
   </div>
 </template>
@@ -184,9 +176,11 @@ const getTimeAgo = (dateString) => {
   0% {
     box-shadow: 0 0 0 0 rgba(255, 65, 108, 0.7);
   }
+
   70% {
     box-shadow: 0 0 0 10px rgba(255, 65, 108, 0);
   }
+
   100% {
     box-shadow: 0 0 0 0 rgba(255, 65, 108, 0);
   }
@@ -212,6 +206,7 @@ const getTimeAgo = (dateString) => {
     opacity: 0;
     transform: translateY(-10px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -407,17 +402,17 @@ const getTimeAgo = (dateString) => {
     width: 320px;
     right: -30px;
   }
-  
+
   .notification-item {
     padding: 1rem;
   }
-  
+
   .avatar-placeholder {
     width: 35px;
     height: 35px;
     font-size: 0.9rem;
   }
-  
+
   .notification-message {
     font-size: 0.9rem;
   }
@@ -428,23 +423,23 @@ const getTimeAgo = (dateString) => {
     width: 280px;
     right: -10px;
   }
-  
+
   .notifications-header {
     padding: 1rem;
   }
-  
+
   .notification-item {
     padding: 0.8rem;
   }
-  
+
   .notification-content {
     padding-right: 0.5rem;
   }
-  
+
   .notification-message {
     font-size: 0.85rem;
   }
-  
+
   .time {
     font-size: 0.7rem;
   }

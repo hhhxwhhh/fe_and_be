@@ -10,6 +10,7 @@ import UserProfileView from '../views/UserProfileView.vue'
 import FollowingFeedView from '../views/FollowingFeedView.vue'
 import MessagesView from '../views/MessagesView.vue'  
 import ConversationView from '../views/ConversationView.vue' 
+import ContactView from '../views/ContactView.vue'
 
 const routes = [
   {
@@ -66,6 +67,11 @@ const routes = [
     path: '/messages/:userId',  
     name: 'conversation',
     component: ConversationView
+  },
+  {
+    path: '/contacts',
+    name: 'contacts',
+    component: ContactView
   }
 ]
 

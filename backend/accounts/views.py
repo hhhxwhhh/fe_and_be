@@ -1,28 +1,42 @@
+import os
 from django.shortcuts import render
-from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import get_user_model
+from rest_framework.decorators import api_view, permission_classes
 from django.contrib.auth import authenticate
+from django.http import JsonResponse
+from .models import User
 from .serializers import (
     UserSeralizers,
     UserRegistrationSerializer,
     UserUpdateSerializer,
 )
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.db.models import Q
+from django.conf import settings
+from rest_framework.parsers import MultiPartParser, FormParser
+from django.shortcuts import get_object_or_404
+from rest_framework.pagination import PageNumberPagination
 from posts.models import Post
 from posts.serializers import PostSeralizers
 from interactions.models import Notification
 
-# Create your views here.
-User = get_user_model()
+
+# 添加用户列表视图
+class UserListView(generics.ListAPIView):
+    serializer_class = UserSeralizers
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # 排除当前用户自己
+        return User.objects.exclude(id=self.request.user.id)
 
 
 class RegisterView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
@@ -42,7 +56,7 @@ class RegisterView(APIView):
 
 
 class LoginView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request):
         email = request.data.get("email")
@@ -112,7 +126,7 @@ class UnFollowView(APIView):
 
 
 class UpdateProfileView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
 
     def put(self, request):
@@ -126,7 +140,7 @@ class UpdateProfileView(APIView):
 
 
 class CurrentUserProfileView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
 
     def get(self, request):
@@ -144,6 +158,6 @@ class CurrentUserProfileView(APIView):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([permissions.AllowAny])
 def hello_world(request):
     return Response({"message": "hello from django backend", "status": "success"})

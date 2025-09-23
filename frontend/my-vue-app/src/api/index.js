@@ -1,12 +1,13 @@
 import axios from 'axios'
-import messageAPI from './messages'
 
+const API_BASE_URL = 'http://localhost:8000/api'
+
+// 创建axios实例
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api',
-  timeout: 10000
+  baseURL: API_BASE_URL
 })
 
-// 请求拦截器
+// 添加请求拦截器
 api.interceptors.request.use(
   config => {
     const token = localStorage.getItem('token')
@@ -29,7 +30,7 @@ api.interceptors.request.use(
   }
 )
 
-// 响应拦截器
+// 添加响应拦截器处理认证问题
 api.interceptors.response.use(
   response => response,
   error => {
@@ -40,48 +41,35 @@ api.interceptors.response.use(
       // 可以在这里添加重定向到登录页面的逻辑，或者让路由守卫处理
       console.log('认证已过期，请重新登录')
     }
-    // 不再自动重定向到登录页面，让路由守卫处理
     return Promise.reject(error)
   }
 )
 
-export {
-  messageAPI
-}
-
-export default api
-
-// 用户相关API
+// 认证相关API
 export const authAPI = {
   login: (credentials) => api.post('/auth/login/', credentials),
   register: (userData) => api.post('/auth/register/', userData),
-  profile: () => api.get('/auth/profile/'),  // 获取当前用户资料
-  userProfile: (id) => api.get(`/auth/${id}/`),  // 获取指定用户资料
-  userPosts: (id) => api.get(`/posts/user/${id}/`),  // 获取用户帖子
-  updateProfile: (data) => api.put('/auth/profile/', data,{
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  }),  // 更新当前用户资料
-  followUser: (id) => api.post(`/auth/${id}/follow/`),
-  unfollowUser: (id) => api.post(`/auth/${id}/unfollow/`)
+  profile: () => api.get('/auth/profile/'),
+  userProfile: (userId) => api.get(`/auth/profile/${userId}/`),
+  updateProfile: (userData) => api.put('/auth/profile/', userData),
+  getUsers: () => api.get('/auth/users/'), // 添加获取用户列表的方法
 }
 
 // 帖子相关API
 export const postAPI = {
-  getPosts: () => api.get('/posts/'),//获取关注的用户以及自己的帖子
-  getAllPosts: () => api.get('/posts/?all=true'),//获取所有人发的帖子
-  createPost: (data) => api.post('/posts/', data),
+  getPosts: () => api.get('/posts/'),
   getPost: (id) => api.get(`/posts/${id}/`),
-  getUserPosts: (userId) => api.get(`/posts/user/${userId}/`), // 获取特定用户的帖子
-  updatePost: (id, data) => api.put(`/posts/${id}/`, data),
-  deletePost: (id) => api.delete(`/posts/${id}/`)
+  createPost: (postData) => api.post('/posts/', postData),
+  updatePost: (id, postData) => api.put(`/posts/${id}/`, postData),
+  deletePost: (id) => api.delete(`/posts/${id}/`),
+  getUserPosts: (userId) => api.get(`/posts/user/${userId}/`)
 }
 
 // 评论相关API
 export const commentAPI = {
-  createComment: (postId, data) => api.post(`/posts/${postId}/comments/`, data),
-  deleteComment: (postId, commentId) => api.delete(`/posts/${postId}/comments/${commentId}/`)
+  getComments: (postId) => api.get(`/posts/${postId}/comments/`),
+  createComment: (postId, commentData) => api.post(`/posts/${postId}/comments/`, commentData),
+  deleteComment: (commentId) => api.delete(`/posts/comments/${commentId}/`)
 }
 
 // 点赞相关API
@@ -90,9 +78,21 @@ export const likeAPI = {
   unlikePost: (postId) => api.delete(`/posts/${postId}/like/`)
 }
 
+// 通知相关API
 export const notificationAPI = {
   getNotifications: () => api.get('/interactions/notifications/'),
-  markAsRead: (id) => api.post(`/interactions/notifications/${id}/read/`),
-  markAllAsRead: () => api.post('/interactions/notifications/read-all/'),
+  markAsRead: (notificationId) => api.patch(`/interactions/notifications/${notificationId}/read/`),
+  markAllAsRead: () => api.post('/interactions/notifications/mark-all-read/'),
   getUnreadCount: () => api.get('/interactions/notifications/unread-count/')
+}
+
+// 消息相关API
+export const messageAPI = {
+  getConversations: () => api.get('/messages/conversations/'),
+  getMessages: (userId) => api.get(`/messages/users/${userId}/messages/`),
+  sendMessage: (messageData) => api.post('/messages/messages/', messageData),
+  updateMessage: (messageId, messageData) => api.put(`/messages/messages/${messageId}/`, messageData),
+  deleteMessage: (messageId) => api.delete(`/messages/messages/${messageId}/`),
+  revokeMessage: (messageId) => api.patch(`/messages/messages/${messageId}/revoke/`),
+  markAsRead: (messageId) => api.patch(`/messages/messages/${messageId}/read/`)
 }
