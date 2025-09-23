@@ -6,13 +6,16 @@ from rest_framework.decorators import api_view, permission_classes, action
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django.utils import timezone
-from .models import Message
+from .models import Message, GroupMessage, GroupChat
 from accounts.models import User
 from .serializers import (
     UserSerializer,
     MessageSerializer,
     MessageCreateSerializer,
     MessageUpdateSerializer,
+    GroupChatSerializer,
+    GroupMessageCreateSerializer,
+    GroupMessageSerializer,
 )
 
 
@@ -20,14 +23,110 @@ class IsParticipant(permissions.BasePermission):
     """只有聊天的成员才能访问"""
 
     def has_object_permission(self, request, view, obj):
-        return obj.sender == request.user or obj.recipient == request.user
+        if isinstance(obj, Message):
+            return obj.recipient == request.user or obj.sender == request.user
+        elif isinstance(obj, GroupMessage):
+            return obj.group.members.filter(id=request.user.id).exists()
+        elif isinstance(obj, GroupChat):
+            return obj.members.filter(id=request.user.id).exists()
+        return False
 
 
 class IsSender(permissions.BasePermission):
     """只有发送者才能编辑或删除消息"""
 
     def has_object_permission(self, request, view, obj):
-        return obj.sender == request.user
+        if isinstance(obj, Message):
+            return obj.sender == request.user
+        elif isinstance(obj, GroupMessage):
+            return obj.sender == request.user
+        return False
+
+
+class GroupChatViewSet(viewsets.ModelViewSet):
+    serializer_class = GroupChatSerializer
+    permission_classes = [permissions.IsAuthenticated, IsParticipant]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_queryset(self):
+        return GroupChat.objects.filter(members=self.request.user)
+
+    def perform_create(self, serializer):
+        group = serializer.save(created_by=self.request.user)
+        group.members.add(self.request.user)
+
+    @action(detail=True, methods=["post"])
+    def add_member(self, request, pk=None):
+        """添加成员到群聊"""
+        group = self.get_object()
+        user_id = request.data.get("user_id")
+        if not user_id:
+            return Response(
+                {"detail": "需要提供用户ID"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            user = User.objects.get(id=user_id)
+            group.members.add(user)
+            return Response(
+                {"detail": "用户已成功添加到群聊"}, status=status.HTTP_200_OK
+            )
+        except User.DoesNotExist:
+            return Response({"detail": "用户不存在"}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=True, methods=["post"])
+    def remove_member(self, request, pk=None):
+        """从群聊中移除成员"""
+        group = self.get_object()
+        user_id = request.data.get("user_id")
+        if not user_id:
+            return Response(
+                {"detail": "需要提供用户ID"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 不能移除自己，除非是群主
+        if int(user_id) == request.user.id and group.created_by != request.user:
+            return Response(
+                {"detail": "普通成员不能移除自己"}, status=status.HTTP_403_FORBIDDEN
+            )
+
+        # 群主可以移除任何人，包括自己
+        # 其他成员只能移除自己
+        try:
+            user = User.objects.get(id=user_id)
+            if group.created_by == request.user or int(user_id) == request.user.id:
+                group.members.remove(user)
+                return Response(
+                    {"detail": "用户已成功从群聊中移除"}, status=status.HTTP_200_OK
+                )
+            else:
+                return Response(
+                    {"detail": "您没有权限移除该用户"}, status=status.HTTP_403_FORBIDDEN
+                )
+        except User.DoesNotExist:
+            return Response({"detail": "用户不存在"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class GroupMessageViewSet(viewsets.ModelViewSet):
+    """群聊消息视图集"""
+
+    serializer_class = GroupMessageSerializer
+    permission_classes = [permissions.IsAuthenticated, IsParticipant]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_queryset(self):
+        group_id = self.request.query_params.get("group_id", None)
+        if group_id:
+            return GroupMessage.objects.filter(group_id=group_id)
+        return GroupMessage.objects.filter(group__members=self.request.user)
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return GroupMessageCreateSerializer
+        return GroupMessageSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(sender=self.request.user)
 
 
 @api_view(["POST"])
@@ -158,12 +257,14 @@ class MessageCreateView(generics.CreateAPIView):
 @api_view(["GET"])
 @permission_classes([permissions.IsAuthenticated])
 def conversation_list(request):
-    """获取当前用户的所有对话"""
+    """获取当前用户的所有对话，包括私聊和群聊"""
     user = request.user
+
+    # 获取私聊对话
     sent_messages = Message.objects.filter(sender=user)
     received_messages = Message.objects.filter(recipient=user)
 
-    # 构建对话的列表
+    # 构建私聊对话列表
     conversations = {}
 
     for msg in sent_messages:
@@ -178,7 +279,8 @@ def conversation_list(request):
                 "timestamp": msg.timestamp,
                 "unread_count": 0,
             }
-    # 处理接受到的信息
+
+    # 处理接收到的信息
     for msg in received_messages:
         sender_id = msg.sender.id
         if (
@@ -198,8 +300,8 @@ def conversation_list(request):
     conversations_list = list(conversations.values())
     conversations_list.sort(key=lambda x: x["timestamp"], reverse=True)
 
-    # 序列化数据
-    result = []
+    # 序列化私聊数据
+    private_chats = []
     for conv in conversations_list:
         # 获取用户头像的完整URL
         avatar_url = None
@@ -207,7 +309,7 @@ def conversation_list(request):
             # 使用 request.build_absolute_uri 生成完整URL
             avatar_url = request.build_absolute_uri(conv["user"].avatar.url)
 
-        result.append(
+        private_chats.append(
             {
                 "user": {
                     "id": conv["user"].id,
@@ -223,11 +325,40 @@ def conversation_list(request):
             }
         )
 
-    # 添加调试信息
-    print(f"User: {user.username}")
-    print(f"Conversations result: {result}")
+    # 获取群聊列表
+    group_chats = GroupChat.objects.filter(members=user).prefetch_related("members")
+    group_chats_data = []
+    for group in group_chats:
+        # 获取群聊最新的消息
+        latest_message = group.messages.order_by("-timestamp").first()
 
-    return Response(result)
+        avatar_url = None
+        if group.avatar:
+            avatar_url = request.build_absolute_uri(group.avatar.url)
+
+        group_data = {
+            "id": group.id,
+            "name": group.name,
+            "description": group.description,
+            "avatar": avatar_url,
+            "member_count": group.members.count(),
+            "created_at": group.created_at,
+            "last_message": None,
+        }
+
+        if latest_message:
+            group_data["last_message"] = {
+                "content": latest_message.content,
+                "timestamp": latest_message.timestamp,
+                "sender": {
+                    "id": latest_message.sender.id,
+                    "username": latest_message.sender.username,
+                },
+            }
+
+        group_chats_data.append(group_data)
+
+    return Response({"private_chats": private_chats, "group_chats": group_chats_data})
 
 
 @api_view(["PATCH"])

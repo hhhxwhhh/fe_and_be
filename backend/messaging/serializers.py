@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Message
+from .models import Message, GroupChat, GroupMessage
 from accounts.models import User
 
 
@@ -7,6 +7,32 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "username", "avatar"]
+
+
+class GroupChatSerializer(serializers.ModelSerializer):
+    """群聊序列化器"""
+
+    members = UserSerializer(many=True, read_only=True)
+    created_by = UserSerializer(read_only=True)
+    member_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = GroupChat
+        fields = [
+            "id",
+            "name",
+            "description",
+            "members",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "avatar",
+            "member_count",
+        ]
+        read_only_fields = ["created_at", "updated_at", "created_by"]
+
+    def get_member_count(self, obj):
+        return obj.members.count()
 
 
 class MessageSerializer(serializers.ModelSerializer):
@@ -29,6 +55,51 @@ class MessageSerializer(serializers.ModelSerializer):
             "is_revoked",
         ]
         read_only_fields = ["sender", "timestamp", "updated_at", "is_edited"]
+
+
+class GroupMessageSerializer(serializers.ModelSerializer):
+    """群聊消息序列化器"""
+
+    sender = UserSerializer(read_only=True)
+    group = GroupChatSerializer(read_only=True)
+
+    class Meta:
+        model = GroupMessage
+        fields = [
+            "id",
+            "group",
+            "sender",
+            "content",
+            "timestamp",
+            "is_edited",
+            "updated_at",
+            "file",
+            "image",
+            "is_revoked",
+        ]
+        read_only_fields = ["sender", "timestamp", "updated_at", "is_edited"]
+
+
+class GroupMessageCreateSerializer(serializers.ModelSerializer):
+    """创建群聊消息序列化器"""
+
+    class Meta:
+        model = GroupMessage
+        fields = ["group", "content", "file", "image"]
+        extra_kwargs = {"content": {"required": False}}
+
+    def validate(self, data):
+        if not (data.get("content") or data.get("file") or data.get("image")):
+            raise serializers.ValidationError("发送的内容不能为空")
+        return data
+
+    def validate_file(self, value):
+        if value:
+            # 检查文件大小 (10MB)
+            if value.size > 10 * 1024 * 1024:
+                raise serializers.ValidationError("文件大小不能超过10MB")
+            return value
+        return value
 
 
 class MessageCreateSerializer(serializers.ModelSerializer):
