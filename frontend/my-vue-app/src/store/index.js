@@ -96,7 +96,11 @@ export const useMainStore = defineStore('main', {
     async fetchConversations() {
       try {
         const response = await messageAPI.getConversations()
-        this.conversations = response.data
+        // 合并私聊和群聊数据
+        this.conversations = [
+          ...response.data.private_chats || [], 
+          ...response.data.group_chats || []
+        ]
         
         // 更新全局未读计数
         await this.fetchUnreadNotificationCount()

@@ -13,12 +13,18 @@ onMounted(async () => {
   await store.fetchConversations()
   conversations.value = store.conversations;
 
-  if(!websocket.isConnected){
+  if (!websocket.isConnected) {
     store.initWebSocket();
   }
 })
 
 const openConversation = async (userId) => {
+  // 确保 userId 是有效的
+  if (!userId || isNaN(userId)) {
+    console.error('Invalid user ID:', userId)
+    return
+  }
+
   await store.fetchConversation(userId);
   router.push(`/messages/${userId}`);
 }
@@ -30,20 +36,12 @@ const openConversation = async (userId) => {
     <div class="messages-header">
       <h2>私信</h2>
     </div>
-    
+
     <div class="conversations-list">
-      <div 
-        v-for="conversation in conversations" 
-        :key="conversation.user?.id || conversation.id"
-        class="conversation-item"
-        @click="openConversation(conversation.user?.id)"
-      >
+      <div v-for="conversation in conversations" :key="conversation.user?.id || conversation.id"
+        class="conversation-item" @click="openConversation(conversation.user?.id)">
         <div class="user-avatar">
-          <img 
-            v-if="conversation.user?.avatar" 
-            :src="conversation.user.avatar" 
-            :alt="conversation.user?.username"
-          >
+          <img v-if="conversation.user?.avatar" :src="conversation.user.avatar" :alt="conversation.user?.username">
           <div v-else class="avatar-placeholder">
             {{ conversation.user?.username?.charAt(0).toUpperCase() || 'U' }}
           </div>
@@ -61,7 +59,7 @@ const openConversation = async (userId) => {
           </div>
         </div>
       </div>
-      
+
       <div v-if="conversations.length === 0" class="no-conversations">
         暂无私信
       </div>
