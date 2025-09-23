@@ -1,0 +1,49 @@
+#后端
+
+# 核心框架
+FastAPI 或 Django 4.x
+
+# 数据库
+PostgreSQL + Redis + Elasticsearch
+
+# 消息队列
+RabbitMQ 或 Apache Kafka
+
+# 微服务通信
+gRPC 或 GraphQL
+
+# AI/ML 集成
+TensorFlow Serving, Hugging Face Transformers
+
+# 容器化
+Docker + Kubernetes + Helm
+
+# 监控和日志
+Prometheus + Grafana + ELK Stack
+
+
+
+# 前端
+// 核心框架
+Vue 3 + TypeScript
+
+// 状态管理
+Pinia + Vuex ORM
+
+// 构建工具
+Vite + Webpack 5
+
+// 实时通信
+Socket.IO + WebRTC
+
+// UI组件库
+Element Plus + Tailwind CSS
+
+// 3D图形
+Three.js + Babylon.js
+
+// 移动端
+Quasar Framework 或 Ionic Vue
+
+// PWA支持
+Workbox + Vite PWA Plugin
