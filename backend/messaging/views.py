@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework import viewsets, generics, permissions, status
 from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.decorators import api_view, permission_classes, action
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
@@ -46,7 +46,7 @@ class IsSender(permissions.BasePermission):
 class GroupChatViewSet(viewsets.ModelViewSet):
     serializer_class = GroupChatSerializer
     permission_classes = [permissions.IsAuthenticated, IsParticipant]
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_queryset(self):
         return GroupChat.objects.filter(members=self.request.user)
@@ -129,7 +129,7 @@ class GroupMessageViewSet(viewsets.ModelViewSet):
         serializer.save(sender=self.request.user)
 
 
-@api_view(["POST"])
+@api_view(["PATCH"])
 @permission_classes([permissions.IsAuthenticated])
 def revoke_message(request, pk):
     try:

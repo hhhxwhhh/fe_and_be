@@ -50,14 +50,15 @@ export const authAPI = {
   login: (credentials) => api.post('/auth/login/', credentials),
   register: (userData) => api.post('/auth/register/', userData),
   profile: () => api.get('/auth/profile/'),
-  userProfile: (userId) => api.get(`/auth/profile/${userId}/`),
+  userProfile: (userId) => api.get(`/auth/${userId}/`), 
   updateProfile: (userData) => api.put('/auth/profile/', userData),
-  getUsers: () => api.get('/auth/users/'), // 添加获取用户列表的方法
+  getUsers: () => api.get('/auth/users/'), 
 }
 
 // 帖子相关API
 export const postAPI = {
   getPosts: () => api.get('/posts/'),
+  getAllPosts: () => api.get('/posts/?all=true'),
   getPost: (id) => api.get(`/posts/${id}/`),
   createPost: (postData) => api.post('/posts/', postData),
   updatePost: (id, postData) => api.put(`/posts/${id}/`, postData),
@@ -89,16 +90,18 @@ export const notificationAPI = {
 // 消息相关API
 export const messageAPI = {
   getConversations: () => api.get('/messages/conversations/'),
-  getMessages: (userId) => api.get(`/messages/users/${userId}/messages/`),
-  sendMessage: (messageData) => api.post('/messages/messages/', messageData),
-  updateMessage: (messageId, messageData) => api.put(`/messages/messages/${messageId}/`, messageData),
-  deleteMessage: (messageId) => api.delete(`/messages/messages/${messageId}/`),
-  revokeMessage: (messageId) => api.patch(`/messages/messages/${messageId}/revoke/`),
-  markAsRead: (messageId) => api.patch(`/messages/messages/${messageId}/read/`),
+  getMessages: (userId) => api.get(`/messages/conversations/${userId}/`), 
+  sendMessage: (messageData) => api.post('/messages/messages/', messageData), 
+  updateMessage: (messageId, messageData) => api.put(`/messages/messages/${messageId}/`, messageData), 
+  deleteMessage: (messageId) => api.delete(`/messages/messages/${messageId}/`), 
+  revokeMessage: (messageId) => api.patch(`/messages/messages/${messageId}/revoke/`), 
+  markAsRead: (messageId) => api.patch(`/messages/messages/${messageId}/read/`), 
   
   // 群聊相关API
   getGroupChat: (groupId) => api.get(`/messages/group-chats/${groupId}/`),
-  createGroupChat: (groupData) => api.post('/messages/group-chats/', groupData),
+  createGroupChat: (groupData) => {
+    return api.post('/messages/group-chats/', groupData);
+  },
   getGroupMessages: (groupId) => api.get(`/messages/group-messages/`, {
     params: { group_id: groupId }
   }),

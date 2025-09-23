@@ -39,7 +39,7 @@ const openConversation = async (userId) => {
 
     <div class="conversations-list">
       <div v-for="conversation in conversations" :key="conversation.user?.id || conversation.id"
-        class="conversation-item" @click="openConversation(conversation.user?.id)">
+        class="conversation-item" @click="openConversation(conversation.user?.id || conversation.id)">
         <div class="user-avatar">
           <img v-if="conversation.user?.avatar" :src="conversation.user.avatar" :alt="conversation.user?.username">
           <div v-else class="avatar-placeholder">
@@ -47,7 +47,7 @@ const openConversation = async (userId) => {
           </div>
         </div>
         <div class="conversation-info">
-          <div class="user-name">{{ conversation.user?.username || '未知用户' }}</div>
+          <div class="user-name">{{ conversation.user?.username || conversation.name || '未知用户' }}</div>
           <div class="last-message">{{ conversation.last_message?.content || '暂无新消息' }}</div>
         </div>
         <div class="conversation-meta">
@@ -66,7 +66,6 @@ const openConversation = async (userId) => {
     </div>
   </div>
 </template>
-
 <style scoped>
 .messages-page {
   max-width: 800px;

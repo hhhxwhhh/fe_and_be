@@ -11,7 +11,9 @@ router.register(r"group-messages", views.GroupMessageViewSet, basename="group-me
 urlpatterns = [
     path("conversations/", views.conversation_list, name="conversation-list"),
     path(
-        "messages/<int:user_id>/", views.MessageListView.as_view(), name="message-list"
+        "conversations/<int:user_id>/",
+        views.MessageListView.as_view(),
+        name="message-list",
     ),
     path("messages/", views.MessageCreateView.as_view(), name="message-create"),
     path(

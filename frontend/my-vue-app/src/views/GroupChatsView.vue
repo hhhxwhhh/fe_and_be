@@ -88,7 +88,12 @@ const createGroup = async () => {
     }
 
     try {
-        await messageAPI.createGroupChat(newGroup.value)
+        const groupData = {
+            name: newGroup.value.name,
+            description: newGroup.value.description || ''
+        };
+
+        await messageAPI.createGroupChat(groupData)
         showCreateGroupModal.value = false
         ElMessage.success('群聊创建成功')
         newGroup.value = { name: '', description: '' }
