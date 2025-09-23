@@ -23,6 +23,22 @@ from rest_framework.pagination import PageNumberPagination
 from posts.models import Post
 from posts.serializers import PostSeralizers
 from interactions.models import Notification
+from rest_framework import filters
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["username", "email", "profile__bio", "profile__name"]
+    ordering_fields = ["date_joined", "last_login"]
+    ordering = ["-date_joined"]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        # 可以添加额外的过滤逻辑
+        return queryset
 
 
 # 添加用户列表视图
