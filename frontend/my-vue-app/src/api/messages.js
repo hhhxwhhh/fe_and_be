@@ -60,9 +60,32 @@ export const sendMessage = (messageData) => {
   return api.post('/messages/messages/', messageData)
 }
 
+// 群聊相关API
+export const getGroupChat = (groupId) => {
+  return api.get(`/messages/group-chats/${groupId}/`)
+}
+
+export const createGroupChat = (groupData) => {
+  return api.post('/messages/group-chats/', groupData)
+}
+
+export const getGroupMessages = (groupId) => {
+  return api.get(`/messages/group-messages/`, {
+    params: { group_id: groupId }
+  })
+}
+
+export const addGroupMember = (groupId, userId) => {
+  return api.post(`/messages/group-chats/${groupId}/add_member/`, { user_id: userId })
+}
+
+export const removeGroupMember = (groupId, userId) => {
+  return api.post(`/messages/group-chats/${groupId}/remove_member/`, { user_id: userId })
+}
+
 // 更新消息
-export const updateMessage = (messageId, data) => {
-  return api.patch(`/messages/messages/${messageId}/`, data)
+export const updateMessage = (messageId, messageData) => {
+  return api.put(`/messages/messages/${messageId}/`, messageData)
 }
 
 // 删除消息
@@ -72,48 +95,10 @@ export const deleteMessage = (messageId) => {
 
 // 撤回消息
 export const revokeMessage = (messageId) => {
-  return api.post(`/messages/messages/${messageId}/revoke/`)
+  return api.patch(`/messages/messages/${messageId}/revoke/`)
 }
 
 // 标记消息为已读
 export const markAsRead = (messageId) => {
   return api.patch(`/messages/messages/${messageId}/read/`)
-}
-
-// 支持WebSocket回退
-export const sendMessageWithFallback = async (messageData) => {
-  // 首先尝试通过WebSocket发送
-  if (websocket.isConnected) {
-    try {
-      return await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error('WebSocket timeout'));
-        }, 5000);
-        
-        websocket.sendMessage(messageData.recipient, messageData.content);
-        
-        // 这里需要根据实际的后端响应来处理
-        setTimeout(() => {
-          clearTimeout(timeout);
-          resolve({ data: { success: true } });
-        }, 100);
-      });
-    } catch (error) {
-      console.warn('WebSocket发送失败，回退到HTTP:', error);
-    }
-  }
-  
-  // 如果WebSocket不可用，使用HTTP API
-  return api.post('/messages/messages/', messageData);
-};
-
-// 默认导出整个API对象
-export default {
-  getConversations,
-  getMessages,
-  sendMessage,
-  updateMessage,
-  deleteMessage,
-  markAsRead,
-  revokeMessage,
 }

@@ -10,7 +10,8 @@ export const useMainStore = defineStore('main', {
     notifications: [],
     unreadNotificationCount: 0,
     conversations: [],
-    currentConversation: null
+    currentConversation: null,
+    groupChats: [] 
   }),
   
   actions: {
@@ -155,6 +156,16 @@ export const useMainStore = defineStore('main', {
           userId,
           messages: []
         };
+      }
+    },
+
+    // 添加获取群聊列表的action
+    async fetchGroupChats() {
+      try {
+        const response = await messageAPI.getConversations()
+        this.groupChats = response.data.group_chats || []
+      } catch (error) {
+        console.error('Error fetching group chats:', error)
       }
     },
 

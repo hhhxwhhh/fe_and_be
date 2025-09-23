@@ -112,6 +112,26 @@ class WebSocketService {
     }
   }
 
+  // 发送群聊消息
+  sendGroupMessage(groupId, formData) {
+    if (this.isConnected && this.socket) {
+      // 将FormData转换为对象
+      const message = {
+        type: 'group_message',
+        group_id: groupId,
+        content: formData.get('content') || '',
+        file: formData.get('file'),
+        image: formData.get('image')
+      };
+      
+      this.socket.send(JSON.stringify(message));
+      return Promise.resolve();
+    } else {
+      console.error('WebSocket is not connected');
+      return Promise.reject(new Error('WebSocket is not connected. Please check your connection.'));
+    }
+  }
+
   markAsRead(messageId) {
     if (this.isConnected && this.socket) {
       const message = {

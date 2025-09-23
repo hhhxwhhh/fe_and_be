@@ -94,5 +94,14 @@ export const messageAPI = {
   updateMessage: (messageId, messageData) => api.put(`/messages/messages/${messageId}/`, messageData),
   deleteMessage: (messageId) => api.delete(`/messages/messages/${messageId}/`),
   revokeMessage: (messageId) => api.patch(`/messages/messages/${messageId}/revoke/`),
-  markAsRead: (messageId) => api.patch(`/messages/messages/${messageId}/read/`)
+  markAsRead: (messageId) => api.patch(`/messages/messages/${messageId}/read/`),
+  
+  // 群聊相关API
+  getGroupChat: (groupId) => api.get(`/messages/group-chats/${groupId}/`),
+  createGroupChat: (groupData) => api.post('/messages/group-chats/', groupData),
+  getGroupMessages: (groupId) => api.get(`/messages/group-messages/`, {
+    params: { group_id: groupId }
+  }),
+  addGroupMember: (groupId, userId) => api.post(`/messages/group-chats/${groupId}/add_member/`, { user_id: userId }),
+  removeGroupMember: (groupId, userId) => api.post(`/messages/group-chats/${groupId}/remove_member/`, { user_id: userId })
 }

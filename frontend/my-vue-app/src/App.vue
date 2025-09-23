@@ -4,7 +4,7 @@ import { RouterView, useRouter, useRoute } from 'vue-router'
 import { useMainStore } from './store'
 import { authAPI } from './api'
 import { ElContainer, ElHeader, ElMain, ElMenu, ElMenuItem, ElIcon, ElAvatar, ElDropdown, ElDropdownMenu, ElDropdownItem } from 'element-plus'
-import { HomeFilled, UserFilled, Edit, SwitchButton, Bell, ChatDotRound, Phone } from '@element-plus/icons-vue'
+import { HomeFilled, UserFilled, Edit, SwitchButton, Bell, ChatDotRound, Phone, User, Comment } from '@element-plus/icons-vue'
 import NotificationBell from './components/NotificationBell.vue'
 import websocket from './services/websocket'
 const store = useMainStore()
@@ -47,6 +47,9 @@ const handleSelect = (key) => {
       break
     case '/messages':
       router.push('/messages')
+      break
+    case '/group-chats':
+      router.push('/group-chats')
       break
     case '/contacts':
       router.push('/contacts')
@@ -131,17 +134,27 @@ onMounted(async () => {
             <!-- 消息 -->
             <div class="nav-icon-button" @click="() => router.push('/messages')">
               <div class="icon-wrapper">
-                <el-icon class="button-icon">
+                <el-icon>
                   <ChatDotRound />
                 </el-icon>
               </div>
               <span class="icon-text">消息</span>
             </div>
 
+            <!-- 群聊 -->
+            <div class="nav-icon-button" @click="() => router.push('/group-chats')">
+              <div class="icon-wrapper">
+                <el-icon>
+                  <Comment />
+                </el-icon>
+              </div>
+              <span class="icon-text">群聊</span>
+            </div>
+
             <!-- 联系人 -->
             <div class="nav-icon-button" @click="() => router.push('/contacts')">
               <div class="icon-wrapper">
-                <el-icon class="button-icon">
+                <el-icon>
                   <Phone />
                 </el-icon>
               </div>

@@ -9,8 +9,10 @@ import EditProfileView from '../views/EditProfileView.vue'
 import UserProfileView from '../views/UserProfileView.vue'
 import FollowingFeedView from '../views/FollowingFeedView.vue'
 import MessagesView from '../views/MessagesView.vue'  
-import ConversationView from '../views/ConversationView.vue' 
-import ContactView from '../views/ContactView.vue'
+import ConversationView from '../views/ConversationView.vue'
+import ContactsView from '../views/ContactsView.vue'
+import GroupChatsView from '../views/GroupChatsView.vue'  
+import GroupChatView from '../views/GroupChatView.vue'   
 
 const routes = [
   {
@@ -71,7 +73,17 @@ const routes = [
   {
     path: '/contacts',
     name: 'contacts',
-    component: ContactView
+    component: ContactsView
+  },
+  {
+    path: '/group-chats',
+    name: 'group-chats',
+    component: GroupChatsView
+  },
+  {
+    path: '/group-chat/:groupId',
+    name: 'group-chat',
+    component: GroupChatView
   }
 ]
 
