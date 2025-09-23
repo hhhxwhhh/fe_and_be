@@ -178,3 +178,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             return group.members.filter(id=user_id).exists()
         except GroupChat.DoesNotExist:
             return False
+
+    async def handle_private_message_with_file(self, data):
+        await self.handle_private_message(data)
+
+    async def handle_group_message_with_file(self, data):
+        await self.handle_group_message(data)

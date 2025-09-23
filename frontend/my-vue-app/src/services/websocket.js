@@ -115,13 +115,10 @@ class WebSocketService {
   // 发送群聊消息
   sendGroupMessage(groupId, formData) {
     if (this.isConnected && this.socket) {
-      // 将FormData转换为对象
       const message = {
         type: 'group_message',
         group_id: groupId,
-        content: formData.get('content') || '',
-        file: formData.get('file'),
-        image: formData.get('image')
+        content: formData.get('content') || ''
       };
       
       this.socket.send(JSON.stringify(message));

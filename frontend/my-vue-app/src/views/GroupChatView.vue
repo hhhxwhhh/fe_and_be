@@ -61,7 +61,7 @@
             <div class="members-list">
                 <div v-for="member in group.members" :key="member.id" class="member-item">
                     <el-avatar :src="member.avatar" size="small">{{ member.username.charAt(0).toUpperCase()
-                        }}</el-avatar>
+                    }}</el-avatar>
                     <span class="member-name">{{ member.username }}</span>
                     <span v-if="member.id === group.created_by.id" class="owner-tag">群主</span>
                 </div>
@@ -146,16 +146,8 @@ const handleSendMessage = async (formData) => {
     if (!groupId) return
 
     try {
-        // 添加群聊ID到表单数据
-        if (!formData.has('group')) {
-            formData.append('group', groupId)
-        }
-
-        // 通过WebSocket发送消息
         await websocket.sendGroupMessage(groupId, formData)
 
-        // 重新获取消息列表
-        await fetchGroupMessages(groupId)
         scrollToBottom()
     } catch (error) {
         console.error('发送群聊消息失败:', error)
