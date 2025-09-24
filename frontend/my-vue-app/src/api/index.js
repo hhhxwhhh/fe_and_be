@@ -87,6 +87,13 @@ export const notificationAPI = {
   getUnreadCount: () => api.get('/interactions/notifications/unread-count/')
 }
 
+// 搜索相关API
+export const searchAPI = {
+  search: (query, type = 'all') => api.get(`/posts/search/`, {
+    params: { q: query, type }
+  })
+}
+
 // 消息相关API
 export const messageAPI = {
   getConversations: () => api.get('/messages/conversations/'),

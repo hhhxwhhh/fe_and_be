@@ -3,8 +3,8 @@ import { ref, watch, onMounted } from 'vue'
 import { RouterView, useRouter, useRoute } from 'vue-router'
 import { useMainStore } from './store'
 import { authAPI } from './api'
-import { ElContainer, ElHeader, ElMain, ElMenu, ElMenuItem, ElIcon, ElAvatar, ElDropdown, ElDropdownMenu, ElDropdownItem } from 'element-plus'
-import { HomeFilled, UserFilled, Edit, SwitchButton, Bell, ChatDotRound, Phone, User, Comment } from '@element-plus/icons-vue'
+import { ElContainer, ElHeader, ElMain, ElMenu, ElMenuItem, ElIcon, ElAvatar, ElDropdown, ElDropdownMenu, ElDropdownItem, ElInput } from 'element-plus'
+import { HomeFilled, UserFilled, Edit, SwitchButton, Bell, ChatDotRound, Phone, User, Comment, Search } from '@element-plus/icons-vue'
 import NotificationBell from './components/NotificationBell.vue'
 import websocket from './services/websocket'
 const store = useMainStore()
@@ -12,6 +12,7 @@ const router = useRouter()
 const route = useRoute()
 
 const activeIndex = ref('/')
+const searchQuery = ref('')
 
 
 watch(() => store.user, (newUser) => {
@@ -76,6 +77,12 @@ const logout = () => {
   router.push('/login')
 }
 
+const handleSearch = () => {
+  if (searchQuery.value.trim()) {
+    router.push(`/search?q=${encodeURIComponent(searchQuery.value.trim())}`)
+  }
+}
+
 // 页面加载时检查用户状态
 onMounted(async () => {
   // 如果有token但store中没有用户信息，尝试获取用户信息
@@ -128,7 +135,18 @@ onMounted(async () => {
             </el-menu-item>
           </el-menu>
         </div>
-
+        <div class="nav-center" v-if="store.user">
+          <div class="search-container">
+            <el-input v-model="searchQuery" placeholder="搜索用户或帖子..." class="nav-search-input"
+              @keyup.enter="handleSearch">
+              <template #prefix>
+                <el-icon>
+                  <Search />
+                </el-icon>
+              </template>
+            </el-input>
+          </div>
+        </div>
         <div class="nav-right">
           <template v-if="store.user">
             <!-- 消息 -->
@@ -298,6 +316,45 @@ onMounted(async () => {
   height: 16px;
 }
 
+.nav-center {
+  flex: 1;
+  max-width: 400px;
+  margin: 0 20px;
+}
+
+.nav-search-input {
+  border-radius: 20px;
+}
+
+.nav-search-input :deep(.el-input__wrapper) {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  box-shadow: none;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.nav-search-input :deep(.el-input__wrapper:hover) {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.nav-search-input :deep(.el-input__wrapper.is-focus) {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.nav-search-input :deep(.el-input__inner) {
+  color: white;
+  caret-color: white;
+}
+
+.nav-search-input :deep(.el-input__inner::placeholder) {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.nav-search-input :deep(.el-input__prefix) {
+  color: rgba(255, 255, 255, 0.7);
+}
+
 .nav-right {
   display: flex;
   align-items: center;
@@ -463,6 +520,11 @@ onMounted(async () => {
 
   .user-info {
     gap: 5px;
+  }
+
+  .nav-center {
+    max-width: 200px;
+    margin: 0 10px;
   }
 }
 </style>

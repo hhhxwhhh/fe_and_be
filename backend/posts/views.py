@@ -16,6 +16,44 @@ from rest_framework.parsers import MultiPartParser, FormParser
 User = get_user_model()
 
 
+class SearchView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        query = request.query_params.get("q", "")
+        search_type = request.query_params.get("type", "all")  # all, posts, users
+
+        if not query:
+            return Response({"results": {"posts": [], "users": []}})
+
+        results = {"posts": [], "users": []}
+
+        if search_type in ["all", "posts"]:
+            # 搜索帖子
+            post_queryset = Post.objects.filter(
+                models.Q(content__icontains=query)
+                | models.Q(author__username__icontains=query)
+            ).distinct()
+            post_serializer = PostSeralizers(
+                post_queryset, many=True, context={"request": request}
+            )
+            results["posts"] = post_serializer.data
+
+        if search_type in ["all", "users"]:
+            # 搜索用户
+            user_queryset = User.objects.filter(
+                models.Q(username__icontains=query) | models.Q(bio__icontains=query)
+            ).distinct()
+            from accounts.serializers import UserSeralizers
+
+            user_serializer = UserSeralizers(
+                user_queryset, many=True, context={"request": request}
+            )
+            results["users"] = user_serializer.data
+
+        return Response({"results": results, "query": query})
+
+
 class PostListView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = (MultiPartParser, FormParser)  # 添加解析器以处理文件上传

@@ -13,6 +13,7 @@ import ConversationView from '../views/ConversationView.vue'
 import ContactsView from '../views/ContactsView.vue'
 import GroupChatsView from '../views/GroupChatsView.vue'  
 import GroupChatView from '../views/GroupChatView.vue'   
+import SearchView from '../components/SearchView.vue'
 
 const routes = [
   {
@@ -84,6 +85,11 @@ const routes = [
     path: '/group-chat/:groupId',
     name: 'group-chat',
     component: GroupChatView
+  },
+  {
+    path: '/search',
+    name: 'search',
+    component: SearchView
   }
 ]
 
