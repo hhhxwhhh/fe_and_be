@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "interactions",
     "messaging",
     "channels",
+    "ai",
 ]
 
 MIDDLEWARE = [
@@ -194,3 +195,9 @@ REST_FRAMEWORK = {
 ASGI_APPLICATION = "myproject.asgi.application"
 
 CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
+
+import os
+
+DEEPSEEK_API_KEY = os.environ.get(
+    "DEEPSEEK_API_KEY",
+)
