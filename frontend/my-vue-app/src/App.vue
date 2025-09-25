@@ -179,6 +179,22 @@ onMounted(async () => {
               <span class="icon-text">联系人</span>
             </div>
 
+            <!-- AI助手 -->
+            <div class="nav-icon-button" @click="() => router.push('/ai-chat')">
+              <div class="icon-wrapper">
+                <el-icon>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                    viewBox="0 0 16 16">
+                    <path
+                      d="M8 0c4.418 0 8 3.358 8 7.5s-3.582 7.5-8 7.5S0 11.642 0 7.5 3.582 0 8 0zm0 1C4.136 1 1 4.136 1 8s3.136 7 7 7 7-3.136 7-7-3.136-7-7-7z" />
+                    <path
+                      d="M8 4a.5.5 0 0 1 .5.5v1.793l.975-.975a.5.5 0 0 1 .707.707l-1.5 1.5a.5.5 0 0 1-.707 0l-1.5-1.5a.5.5 0 1 1 .707-.707L7.5 6.293V4.5A.5.5 0 0 1 8 4zm-3 5a.5.5 0 0 1 .5.5v.5h5v-.5a.5.5 0 0 1 1 0v.5a1.5 1.5 0 0 1-1.5 1.5h-5A1.5 1.5 0 0 1 4 11v-.5a.5.5 0 0 1 .5-.5z" />
+                  </svg>
+                </el-icon>
+              </div>
+              <span class="icon-text">AI助手</span>
+            </div>
+
             <!-- 通知 -->
             <NotificationBell />
 

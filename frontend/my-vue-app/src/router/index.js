@@ -14,6 +14,7 @@ import ContactsView from '../views/ContactsView.vue'
 import GroupChatsView from '../views/GroupChatsView.vue'  
 import GroupChatView from '../views/GroupChatView.vue'   
 import SearchView from '../components/SearchView.vue'
+import AIChatView from '../views/AIChatView.vue'
 
 const routes = [
   {
@@ -69,7 +70,8 @@ const routes = [
   {
     path: '/messages/:userId',  
     name: 'conversation',
-    component: ConversationView
+    component: ConversationView,
+    props:true
   },
   {
     path: '/contacts',
@@ -89,8 +91,18 @@ const routes = [
   {
     path: '/search',
     name: 'search',
-    component: SearchView
-  }
+    component: SearchView,
+    props:route => ({ query: router.q })
+  },
+  {
+    path: '/ai-chat',
+    name: 'AIChat',
+    component: AIChatView,
+    meta: { 
+      requiresAuth: true,
+      title: 'AI智能助手'
+    }
+  },
 ]
 
 const router = createRouter({

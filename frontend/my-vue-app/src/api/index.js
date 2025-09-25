@@ -117,3 +117,4 @@ export const messageAPI = {
   addGroupMember: (groupId, userId) => api.post(`/messages/group-chats/${groupId}/add_member/`, { user_id: userId }),
   removeGroupMember: (groupId, userId) => api.post(`/messages/group-chats/${groupId}/remove_member/`, { user_id: userId })
 }
+export { api };
