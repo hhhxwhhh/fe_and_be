@@ -1,5 +1,6 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue'
+import ThemeToggle from './components/ThemeToggle.vue'
 import { RouterView, useRouter, useRoute } from 'vue-router'
 import { useMainStore } from './store'
 import { authAPI } from './api'
@@ -147,95 +148,92 @@ onMounted(async () => {
             </el-input>
           </div>
         </div>
-        <div class="nav-right">
-          <template v-if="store.user">
-            <!-- 消息 -->
-            <div class="nav-icon-button" @click="() => router.push('/messages')">
-              <div class="icon-wrapper">
-                <el-icon>
-                  <ChatDotRound />
-                </el-icon>
+  <div class="nav-right" style="display: flex; align-items: center; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <template v-if="store.user">
+              <!-- 消息 -->
+              <div class="nav-icon-button" @click="() => router.push('/messages')">
+                <div class="icon-wrapper">
+                  <el-icon>
+                    <ChatDotRound />
+                  </el-icon>
+                </div>
+                <span class="icon-text">消息</span>
               </div>
-              <span class="icon-text">消息</span>
-            </div>
-
-            <!-- 群聊 -->
-            <div class="nav-icon-button" @click="() => router.push('/group-chats')">
-              <div class="icon-wrapper">
-                <el-icon>
-                  <Comment />
-                </el-icon>
+              <!-- 群聊 -->
+              <div class="nav-icon-button" @click="() => router.push('/group-chats')">
+                <div class="icon-wrapper">
+                  <el-icon>
+                    <Comment />
+                  </el-icon>
+                </div>
+                <span class="icon-text">群聊</span>
               </div>
-              <span class="icon-text">群聊</span>
-            </div>
-
-            <!-- 联系人 -->
-            <div class="nav-icon-button" @click="() => router.push('/contacts')">
-              <div class="icon-wrapper">
-                <el-icon>
-                  <Phone />
-                </el-icon>
+              <!-- 联系人 -->
+              <div class="nav-icon-button" @click="() => router.push('/contacts')">
+                <div class="icon-wrapper">
+                  <el-icon>
+                    <Phone />
+                  </el-icon>
+                </div>
+                <span class="icon-text">联系人</span>
               </div>
-              <span class="icon-text">联系人</span>
-            </div>
-
-            <!-- AI助手 -->
-            <div class="nav-icon-button" @click="() => router.push('/ai-chat')">
-              <div class="icon-wrapper">
-                <el-icon>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                    viewBox="0 0 16 16">
-                    <path
-                      d="M8 0c4.418 0 8 3.358 8 7.5s-3.582 7.5-8 7.5S0 11.642 0 7.5 3.582 0 8 0zm0 1C4.136 1 1 4.136 1 8s3.136 7 7 7 7-3.136 7-7-3.136-7-7-7z" />
-                    <path
-                      d="M8 4a.5.5 0 0 1 .5.5v1.793l.975-.975a.5.5 0 0 1 .707.707l-1.5 1.5a.5.5 0 0 1-.707 0l-1.5-1.5a.5.5 0 1 1 .707-.707L7.5 6.293V4.5A.5.5 0 0 1 8 4zm-3 5a.5.5 0 0 1 .5.5v.5h5v-.5a.5.5 0 0 1 1 0v.5a1.5 1.5 0 0 1-1.5 1.5h-5A1.5 1.5 0 0 1 4 11v-.5a.5.5 0 0 1 .5-.5z" />
-                  </svg>
-                </el-icon>
+              <!-- AI助手 -->
+              <div class="nav-icon-button" @click="() => router.push('/ai-chat')">
+                <div class="icon-wrapper">
+                  <el-icon>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                      viewBox="0 0 16 16">
+                      <path
+                        d="M8 0c4.418 0 8 3.358 8 7.5s-3.582 7.5-8 7.5S0 11.642 0 7.5 3.582 0 8 0zm0 1C4.136 1 1 4.136 1 8s3.136 7 7 7 7-3.136 7-7-3.136-7-7-7z" />
+                      <path
+                        d="M8 4a.5.5 0 0 1 .5.5v1.793l.975-.975a.5.5 0 0 1 .707.707l-1.5 1.5a.5.5 0 0 1-.707 0l-1.5-1.5a.5.5 0 1 1 .707-.707L7.5 6.293V4.5A.5.5 0 0 1 8 4zm-3 5a.5.5 0 0 1 .5.5v.5h5v-.5a.5.5 0 0 1 1 0v.5a1.5 1.5 0 0 1-1.5 1.5h-5A1.5 1.5 0 0 1 4 11v-.5a.5.5 0 0 1 .5-.5z" />
+                    </svg>
+                  </el-icon>
+                </div>
+                <span class="icon-text">AI助手</span>
               </div>
-              <span class="icon-text">AI助手</span>
-            </div>
-
-            <!-- 通知 -->
-            <NotificationBell />
-
-            <!-- 用户菜单 -->
-            <el-dropdown class="user-dropdown">
-              <div class="user-info">
-                <el-avatar :size="32" :src="store.user.avatar || ''" class="user-avatar">
-                  {{ store.user.username?.charAt(0)?.toUpperCase() }}
-                </el-avatar>
-                <span class="username">{{ store.user.username }}</span>
-              </div>
-
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item @click="() => router.push(`/profile/${store.user.id}`)">
-                    <el-icon>
-                      <UserFilled />
-                    </el-icon>
-                    个人资料
-                  </el-dropdown-item>
-                  <el-dropdown-item @click="logout">
-                    <el-icon>
-                      <SwitchButton />
-                    </el-icon>
-                    退出登录
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-          </template>
-
-          <template v-else>
-            <el-menu mode="horizontal" @select="handleSelect" class="auth-menu" :ellipsis="false">
-              <el-menu-item index="/login">
-                登录
-              </el-menu-item>
-              <el-menu-item index="/register">
-                注册
-              </el-menu-item>
-            </el-menu>
-          </template>
+              <!-- 通知 -->
+              <NotificationBell />
+              <!-- 用户菜单 -->
+              <el-dropdown class="user-dropdown">
+                <div class="user-info">
+                  <el-avatar :size="32" :src="store.user.avatar || ''" class="user-avatar">
+                    {{ store.user.username?.charAt(0)?.toUpperCase() }}
+                  </el-avatar>
+                  <span class="username">{{ store.user.username }}</span>
+                </div>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item @click="() => router.push(`/profile/${store.user.id}`)">
+                      <el-icon>
+                        <UserFilled />
+                      </el-icon>
+                      个人资料
+                    </el-dropdown-item>
+                    <el-dropdown-item @click="logout">
+                      <el-icon>
+                        <SwitchButton />
+                      </el-icon>
+                      退出登录
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </template>
+            <template v-else>
+              <el-menu mode="horizontal" @select="handleSelect" class="auth-menu" :ellipsis="false">
+                <el-menu-item index="/login">
+                  登录
+                </el-menu-item>
+                <el-menu-item index="/register">
+                  注册
+                </el-menu-item>
+              </el-menu>
+            </template>
+          </div>
+          <!-- 主题切换按钮，始终显示 -->
+          <ThemeToggle />
         </div>
       </div>
     </el-header>

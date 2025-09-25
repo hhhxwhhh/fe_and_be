@@ -6,6 +6,7 @@ import router from './router'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import { useMainStore } from './store'
+import { themeManager } from './store/theme/themeManager'
 
 
 
@@ -16,6 +17,10 @@ app.use(pinia)
 app.use(router)
 app.use(ElementPlus)
 
+
+
+// 初始化主题（白天/黑夜）
+themeManager.initTheme();
 
 router.isReady().then(()=>{
     const store = useMainStore();
