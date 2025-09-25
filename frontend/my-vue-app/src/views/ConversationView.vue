@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, nextTick, watch } from 'vue'
+import { ref, onMounted, nextTick, watch, computed } from 'vue'
 import { useMainStore } from '../store'
 import { useRoute, useRouter } from 'vue-router'
 import MessageForm from '../components/MessageForm.vue'
@@ -19,6 +19,11 @@ const loadingMore = ref(false)
 // 编辑消息相关的状态
 const editingMessage = ref(null)
 const editContent = ref('')
+
+// 计算属性：过滤掉已撤回的消息
+const validMessages = computed(() => {
+  return messages.value.filter(message => !message.is_revoked)
+})
 
 // 监听路由变化，确保组件正确更新
 watch(() => route.params.userId, () => {
@@ -116,18 +121,24 @@ const scrollToBottom = () => {
   })
 }
 
-const handleSubmit = async (formData) => {
+const handleSubmit = async (formData, messageId = null) => {
   const userId = parseInt(route.params.userId)
   if (isNaN(userId)) return;
 
   try {
-    // 添加接收者ID到表单数据
-    if (!formData.has('recipient')) {
-      formData.append('recipient', userId)
+    let response;
+
+    // 如果提供了messageId，则更新现有消息，否则创建新消息
+    if (messageId) {
+      response = await messageAPI.updateMessage(messageId, formData);
+    } else {
+      // 添加接收者ID到表单数据
+      if (!formData.has('recipient')) {
+        formData.append('recipient', userId)
+      }
+      response = await messageAPI.sendMessage(formData);
     }
 
-    // 发送消息并获取返回的结果
-    const response = await messageAPI.sendMessage(formData)
     let newMessage = response.data
 
     if (!newMessage.sender || typeof newMessage.sender === 'number') {
@@ -141,33 +152,45 @@ const handleSubmit = async (formData) => {
       newMessage.timestamp = new Date().toISOString()
     }
 
-    // 更新本地消息列表
-    if (newMessage && typeof newMessage === 'object') {
-      // 检查消息是否已经存在于列表中
-      const existingMessageIndex = messages.value.findIndex(msg => msg.id === newMessage.id)
-
-      if (existingMessageIndex !== -1) {
-        // 如果已存在，更新它
-        messages.value[existingMessageIndex] = newMessage
-      } else {
-        // 如果不存在，添加到列表末尾
-        messages.value.push(newMessage)
+    if (messageId) {
+      // 更新本地消息列表中的消息
+      const index = messages.value.findIndex(msg => msg.id === messageId)
+      if (index !== -1) {
+        messages.value[index] = newMessage
       }
 
-      // 按时间排序
-      messages.value.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+      // 重置编辑状态
+      editingMessage.value = null
+      editContent.value = ''
+    } else {
+      // 添加新消息到本地消息列表
+      if (newMessage && typeof newMessage === 'object') {
+        // 检查消息是否已经存在于列表中
+        const existingMessageIndex = messages.value.findIndex(msg => msg.id === newMessage.id)
 
-      // 强制 Vue 重新渲染以应用新样式
-      messages.value = [...messages.value]
+        if (existingMessageIndex !== -1) {
+          // 如果已存在，更新它
+          messages.value[existingMessageIndex] = newMessage
+        } else {
+          // 如果不存在，添加到列表末尾
+          messages.value.push(newMessage)
+        }
 
-      // 确保在下次DOM更新后滚动到底部
-      nextTick(() => {
-        scrollToBottom()
-      })
+        // 按时间排序
+        messages.value.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+
+        // 强制 Vue 重新渲染以应用新样式
+        messages.value = [...messages.value]
+
+        // 确保在下次DOM更新后滚动到底部
+        nextTick(() => {
+          scrollToBottom()
+        })
+      }
     }
   } catch (error) {
-    console.error('发送消息失败:', error)
-    alert('发送消息失败')
+    console.error(messageId ? '更新消息失败:' : '发送消息失败:', error)
+    alert(messageId ? '更新消息失败' : '发送消息失败')
   }
 }
 
@@ -256,7 +279,6 @@ const cancelEdit = () => {
   editContent.value = '';
 }
 </script>
-
 <template>
   <div class="conversation-page">
     <!-- 聊天头部 -->
@@ -282,8 +304,8 @@ const cancelEdit = () => {
           <el-skeleton :rows="1" animated />
         </div>
 
-        <!-- 消息列表 -->
-        <MessageItem v-for="message in messages" :key="message.id" :message="message"
+        <!-- 消息列表 - 过滤掉已撤回的消息 -->
+        <MessageItem v-for="message in validMessages" :key="message.id" :message="message"
           :currentUserId="store.user?.id || 0" @edit-message="handleEditMessage" @delete-message="handleDeleteMessage"
           @revoke-message="handleRevokeMessage" />
       </div>

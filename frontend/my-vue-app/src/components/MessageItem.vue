@@ -13,7 +13,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['edit', 'delete', 'revoke'])
+const emit = defineEmits(['edit-message', 'delete-message', 'revoke-message'])
 
 // 控制错误提示模态框的显示
 const showErrorModal = ref(false)
@@ -24,7 +24,6 @@ const isOwnMessage = computed(() => {
   if (!props.message || !props.message.sender) {
     return false
   }
-
 
   const senderId = typeof props.message.sender === 'object' ? props.message.sender.id : props.message.sender
 
@@ -140,11 +139,11 @@ const getFileName = (filePath) => {
 }
 
 const handleEdit = () => {
-  emit('edit', props.message)
+  emit('edit-message', props.message)
 }
 
 const handleDelete = () => {
-  emit('delete', props.message)
+  emit('delete-message', props.message)
 }
 
 const handleRevoke = async () => {
@@ -157,11 +156,15 @@ const handleRevoke = async () => {
       return
     }
 
-    await messageAPI.revokeMessage(props.message.id)
-    emit('revoke', props.message.id)
+    const response = await messageAPI.revokeMessage(props.message.id)
+    emit('revoke-message', props.message.id, response.data)
   } catch (error) {
     console.error('撤回消息失败:', error)
-    errorMessage.value = '撤回消息失败: ' + (error.response?.data?.detail || '未知错误')
+    if (error.response && error.response.data && error.response.data.detail) {
+      errorMessage.value = '撤回消息失败: ' + error.response.data.detail
+    } else {
+      errorMessage.value = '撤回消息失败: ' + (error.message || '未知错误')
+    }
     showErrorModal.value = true
   }
 }

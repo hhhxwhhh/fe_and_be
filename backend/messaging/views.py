@@ -151,11 +151,19 @@ def revoke_message(request, pk):
         )
 
     time_diff = timezone.now() - message.timestamp
-    if time_diff.total_seconds() > 120:
+    if time_diff.total_seconds() > 120:  # 2分钟 = 120秒
         return Response(
             {"detail": "消息发送超过2分钟，无法撤回"},
             status=status.HTTP_400_BAD_REQUEST,
         )
+
+    # 添加检查确保消息不是空的
+    if not message.content and not message.image and not message.file:
+        return Response(
+            {"detail": "无法撤回空消息"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
     message.is_revoked = True
     message.save()
 
