@@ -25,7 +25,7 @@ const isOwnMessage = computed(() => {
     return false
   }
 
-  // 兼容不同的sender格式（可能是对象或者ID）
+
   const senderId = typeof props.message.sender === 'object' ? props.message.sender.id : props.message.sender
 
   return senderId === props.currentUserId
@@ -108,14 +108,34 @@ const getFileIcon = (filename) => {
   if (typeof filename !== 'string') return '📎'
 
   const ext = filename.split('.').pop().toLowerCase()
-  if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(ext)) {
+  if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(ext)) {
     return '🖼️'
   } else if (['pdf'].includes(ext)) {
     return '📄'
   } else if (['doc', 'docx'].includes(ext)) {
     return '📝'
+  } else if (['xls', 'xlsx'].includes(ext)) {
+    return '📊'
+  } else if (['ppt', 'pptx'].includes(ext)) {
+    return '📑'
+  } else if (['zip', 'rar', '7z', 'tar'].includes(ext)) {
+    return '📦'
+  } else if (['mp3', 'wav', 'ogg'].includes(ext)) {
+    return '🎵'
+  } else if (['mp4', 'avi', 'mov', 'mkv'].includes(ext)) {
+    return '🎬'
   } else {
     return '📎'
+  }
+}
+
+const getFileName = (filePath) => {
+  if (!filePath) return '未知文件'
+  try {
+    const fileName = filePath.split('/').pop()
+    return decodeURIComponent(fileName)
+  } catch (e) {
+    return '未知文件'
   }
 }
 
@@ -151,43 +171,98 @@ const closeErrorModal = () => {
   errorMessage.value = ''
 }
 </script>
-
 <template>
-  <div class="message-item" :class="{ 'own-message': isOwnMessage }">
-    <div class="message-content">
-      <!-- 显示已撤回消息 -->
-      <div v-if="message.is_revoked" class="revoked-message">
-        {{ isOwnMessage ? '你撤回了一条消息' : '对方撤回了一条消息' }}
+  <div class="message-wrapper" :class="{ 'own-message': isOwnMessage }">
+    <!-- 对方消息 -->
+    <template v-if="!isOwnMessage">
+      <div class="avatar-container">
+        <el-avatar :src="message.sender.avatar" :size="35" class="message-avatar">
+          <span v-if="!message.sender.avatar">
+            {{ message.sender.username?.charAt(0).toUpperCase() }}
+          </span>
+        </el-avatar>
       </div>
-
-      <!-- 正常消息内容 -->
-      <template v-else>
-        <div v-if="message.content" class="text-content">
-          {{ message.content }}
+      <div class="message-item">
+        <div class="sender-name" v-if="!isOwnMessage">
+          {{ message.sender.username }}
         </div>
+        <div class="message-content">
+          <!-- 显示已撤回消息 -->
+          <div v-if="message.is_revoked" class="revoked-message">
+            {{ isOwnMessage ? '你撤回了一条消息' : '对方撤回了一条消息' }}
+          </div>
 
-        <div v-if="message.image" class="image-content">
-          <img :src="message.image" alt="上传的图片" class="uploaded-image" />
-        </div>
+          <!-- 正常消息内容 -->
+          <template v-else>
+            <div v-if="message.content" class="text-content">
+              {{ message.content }}
+            </div>
 
-        <div v-if="message.file" class="file-content">
-          <a :href="message.file" target="_blank" class="file-link">
-            <span class="file-icon">{{ getFileIcon(message.file) }}</span>
-            <span class="file-name">{{ message.file.split('/').pop() }}</span>
-          </a>
-        </div>
-      </template>
+            <div v-if="message.image" class="image-content">
+              <img :src="message.image" alt="上传的图片" class="uploaded-image" />
+            </div>
 
-      <div class="message-meta">
-        <span class="timestamp">{{ formatDate(message.timestamp) }}</span>
-        <div v-if="isOwnMessage && !message.is_revoked && (message.content || message.image || message.file)"
-          class="message-actions">
-          <button v-if="canRevoke" @click="handleRevoke" class="action-btn revoke-btn">撤回</button>
-          <button @click="handleEdit" class="action-btn edit-btn">编辑</button>
-          <button @click="handleDelete" class="action-btn delete-btn">删除</button>
+            <div v-if="message.file" class="file-content">
+              <a :href="message.file" target="_blank" class="file-link">
+                <span class="file-icon">{{ getFileIcon(message.file) }}</span>
+                <span class="file-name">{{ getFileName(message.file) }}</span>
+              </a>
+            </div>
+          </template>
+
+          <div class="message-meta">
+            <span class="timestamp">{{ formatDate(message.timestamp) }}</span>
+          </div>
         </div>
       </div>
-    </div>
+    </template>
+
+    <!-- 自己的消息 -->
+    <template v-else>
+      <div class="avatar-container">
+        <el-avatar :src="message.sender.avatar" :size="35" class="message-avatar">
+          <span v-if="!message.sender.avatar">
+            {{ message.sender.username?.charAt(0).toUpperCase() }}
+          </span>
+        </el-avatar>
+      </div>
+      <div class="message-item own-message-item">
+        <div class="message-content">
+          <!-- 显示已撤回消息 -->
+          <div v-if="message.is_revoked" class="revoked-message">
+            {{ isOwnMessage ? '你撤回了一条消息' : '对方撤回了一条消息' }}
+          </div>
+
+          <!-- 正常消息内容 -->
+          <template v-else>
+            <div v-if="message.content" class="text-content">
+              {{ message.content }}
+            </div>
+
+            <div v-if="message.image" class="image-content">
+              <img :src="message.image" alt="上传的图片" class="uploaded-image" />
+            </div>
+
+            <div v-if="message.file" class="file-content">
+              <a :href="message.file" target="_blank" class="file-link">
+                <span class="file-icon">{{ getFileIcon(message.file) }}</span>
+                <span class="file-name">{{ getFileName(message.file) }}</span>
+              </a>
+            </div>
+          </template>
+
+          <div class="message-meta">
+            <span class="timestamp">{{ formatDate(message.timestamp) }}</span>
+            <div v-if="!message.is_revoked && (message.content || message.image || message.file)"
+              class="message-actions">
+              <button v-if="canRevoke" @click.stop="handleRevoke" class="action-btn revoke-btn">撤回</button>
+              <button @click.stop="handleEdit" class="action-btn edit-btn">编辑</button>
+              <button @click.stop="handleDelete" class="action-btn delete-btn">删除</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
 
     <!-- 自定义错误提示模态框 -->
     <div v-if="showErrorModal" class="modal-overlay" @click="closeErrorModal">
@@ -206,47 +281,74 @@ const closeErrorModal = () => {
     </div>
   </div>
 </template>
-
 <style scoped>
+.message-wrapper {
+  display: flex;
+  margin-bottom: 20px;
+  animation: messageAppear 0.3s ease-out;
+  max-width: 100%;
+  width: 100%;
+}
+
+.message-wrapper.own-message {
+  flex-direction: row-reverse;
+}
+
+.avatar-container {
+  display: flex;
+  align-items: flex-start;
+  margin: 0 10px;
+  flex-shrink: 0;
+}
+
+.message-avatar {
+  font-size: 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
 .message-item {
   display: flex;
-  margin-bottom: 15px;
-  max-width: 85%;
-  animation: messageAppear 0.3s ease-out;
-  position: relative;
+  flex-direction: column;
+  max-width: 75%;
 }
 
-.message-item.own-message {
-  align-self: flex-end;
+.own-message-item {
+  align-items: flex-end;
   margin-left: auto;
+  display: flex;
+  flex-direction: column;
 }
 
-@keyframes messageAppear {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.sender-name {
+  font-size: 12px;
+  color: #606266;
+  margin-bottom: 4px;
+  margin-left: 12px;
 }
 
 .message-content {
   background: white;
-  padding: 15px;
+  padding: 12px 16px;
   border-radius: 18px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   position: relative;
   transition: all 0.3s ease;
   border: 1px solid rgba(0, 0, 0, 0.05);
+  max-width: 100%;
+  word-wrap: break-word;
 }
 
-.message-item.own-message .message-content {
+.message-wrapper:not(.own-message) .message-content {
+  border-top-left-radius: 6px;
+  margin-left: 12px;
+}
+
+.message-wrapper.own-message .message-content {
   background: linear-gradient(135deg, #409eff, #337ecc);
   color: white;
   box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+  border-top-right-radius: 6px;
+  margin-right: 12px;
 }
 
 .message-content:hover {
@@ -254,20 +356,21 @@ const closeErrorModal = () => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.message-item.own-message .message-content:hover {
+.message-wrapper.own-message .message-content:hover {
   box-shadow: 0 6px 15px rgba(64, 158, 255, 0.4);
 }
 
 .text-content {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   word-wrap: break-word;
   white-space: pre-wrap;
   line-height: 1.5;
-  font-size: 1rem;
+  font-size: 15px;
 }
 
 .image-content {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+  text-align: center;
 }
 
 .uploaded-image {
@@ -277,6 +380,7 @@ const closeErrorModal = () => {
   display: block;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease;
+  margin: 0 auto;
 }
 
 .uploaded-image:hover {
@@ -284,7 +388,7 @@ const closeErrorModal = () => {
 }
 
 .file-content {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .file-link {
@@ -292,25 +396,27 @@ const closeErrorModal = () => {
   align-items: center;
   gap: 10px;
   padding: 12px 15px;
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(0, 0, 0, 0.03);
   border-radius: 10px;
   text-decoration: none;
   color: inherit;
   transition: all 0.3s ease;
   border: 1px solid rgba(0, 0, 0, 0.05);
+  min-width: 200px;
 }
 
-.message-item.own-message .file-link {
+.message-wrapper.own-message .file-link {
   background: rgba(255, 255, 255, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
 }
 
 .file-link:hover {
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.08);
   transform: translateY(-2px);
 }
 
-.message-item.own-message .file-link:hover {
+.message-wrapper.own-message .file-link:hover {
   background: rgba(255, 255, 255, 0.3);
 }
 
@@ -319,38 +425,44 @@ const closeErrorModal = () => {
 }
 
 .file-name {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .message-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 13px;
-  color: #999;
+  font-size: 12px;
+  color: #909399;
   margin-top: 5px;
 }
 
-.message-item.own-message .message-meta {
-  color: rgba(255, 255, 255, 0.85);
+.message-wrapper.own-message .message-meta {
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .message-actions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .action-btn {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 13px;
-  padding: 4px 10px;
-  border-radius: 5px;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 4px;
   font-weight: 500;
   transition: all 0.3s ease;
-  opacity: 0.8;
+  opacity: 0.9;
+  color: inherit;
+  /* 确保文字颜色正确显示 */
 }
 
 .action-btn:hover {
@@ -373,9 +485,9 @@ const closeErrorModal = () => {
   background: rgba(230, 162, 60, 0.15);
 }
 
-.message-item.own-message .edit-btn,
-.message-item.own-message .delete-btn,
-.message-item.own-message .revoke-btn {
+.message-wrapper.own-message .edit-btn,
+.message-wrapper.own-message .delete-btn,
+.message-wrapper.own-message .revoke-btn {
   color: white;
   background: rgba(255, 255, 255, 0.25);
 }
@@ -384,7 +496,20 @@ const closeErrorModal = () => {
   font-style: italic;
   opacity: 0.7;
   text-align: center;
-  padding: 10px 0;
+  padding: 8px 0;
+  font-size: 14px;
+}
+
+@keyframes messageAppear {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* 自定义模态框样式 */
@@ -403,43 +528,30 @@ const closeErrorModal = () => {
 
 .modal-content {
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  max-width: 400px;
-  width: 90%;
-  animation: modalAppear 0.3s ease-out;
-}
-
-@keyframes modalAppear {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  min-width: 300px;
+  max-width: 90%;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 20px;
+  padding: 20px 20px 10px;
   border-bottom: 1px solid #eee;
 }
 
 .modal-header h3 {
   margin: 0;
   color: #333;
-  font-size: 18px;
+  font-size: 1.2rem;
 }
 
 .modal-close {
   background: none;
   border: none;
-  font-size: 24px;
+  font-size: 1.5rem;
   cursor: pointer;
   color: #999;
   padding: 0;
@@ -448,40 +560,60 @@ const closeErrorModal = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  transition: all 0.3s ease;
 }
 
 .modal-close:hover {
-  background-color: #f5f5f5;
   color: #333;
 }
 
 .modal-body {
   padding: 20px;
+}
+
+.modal-body p {
+  margin: 0;
   color: #666;
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
 .modal-footer {
-  padding: 15px 20px;
+  padding: 15px 20px 20px;
   text-align: right;
-  border-top: 1px solid #eee;
 }
 
 .modal-confirm-btn {
   background: linear-gradient(135deg, #409eff, #337ecc);
   color: white;
   border: none;
-  padding: 8px 20px;
-  border-radius: 20px;
+  padding: 10px 25px;
+  border-radius: 5px;
   cursor: pointer;
-  font-size: 14px;
+  font-weight: 500;
   transition: all 0.3s ease;
 }
 
 .modal-confirm-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(64, 158, 255, 0.3);
+  box-shadow: 0 4px 10px rgba(64, 158, 255, 0.3);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .message-item {
+    max-width: 85%;
+  }
+
+  .text-content {
+    font-size: 14px;
+  }
+
+  .message-meta {
+    font-size: 11px;
+  }
+
+  .action-btn {
+    font-size: 11px;
+    padding: 2px 6px;
+  }
 }
 </style>

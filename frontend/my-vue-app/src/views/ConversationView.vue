@@ -4,7 +4,7 @@ import { useMainStore } from '../store'
 import { useRoute, useRouter } from 'vue-router'
 import MessageForm from '../components/MessageForm.vue'
 import MessageItem from '../components/MessageItem.vue'
-import { authAPI } from '../api' 
+import { authAPI } from '../api'
 import { messageAPI } from '../api'
 
 const store = useMainStore()
@@ -14,6 +14,7 @@ const router = useRouter()
 const messages = ref([])
 const recipient = ref(null)
 const loading = ref(true)
+const loadingMore = ref(false)
 
 // 编辑消息相关的状态
 const editingMessage = ref(null)
@@ -36,20 +37,20 @@ const initializeConversation = async () => {
   }
 
   await store.fetchConversation(userId)
-  messages.value = Array.isArray(store.currentConversation?.messages) 
-    ? store.currentConversation.messages 
+  messages.value = Array.isArray(store.currentConversation?.messages)
+    ? [...store.currentConversation.messages].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
     : []
-  
+
   // 尝试从消息中获取recipient信息
   if (messages.value.length > 0) {
     const firstMessage = messages.value[0];
     if (firstMessage && firstMessage.sender && firstMessage.recipient) {
-      recipient.value = firstMessage.sender.id === (store.user?.id || 0) 
-        ? firstMessage.recipient 
+      recipient.value = firstMessage.sender.id === (store.user?.id || 0)
+        ? firstMessage.recipient
         : firstMessage.sender
     }
   }
-  
+
   // 如果还没有recipient信息，我们需要从API获取用户信息
   if (!recipient.value && userId) {
     try {
@@ -72,9 +73,9 @@ const initializeConversation = async () => {
       }
     }
   }
-  
+
   loading.value = false
-  
+
   // 滚动到最新消息
   scrollToBottom()
 }
@@ -84,6 +85,22 @@ const isOwnMessage = (message) => {
   if (!message || !message.sender) return false
   const currentUserId = store.user?.id || 0
   return message.sender.id === currentUserId
+}
+
+const loadMoreMessages = async () => {
+  const userId = parseInt(route.params.userId)
+  if (isNaN(userId) || loadingMore.value) return;
+  loadingMore.value = true
+  try {
+    await store.fetchMoreMessages(userId)
+    messages.value = Array.isArray(store.currentConversation?.messages)
+      ? [...store.currentConversation.messages].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+      : []
+  } catch (error) {
+    console.error('加载更多消息失败:', error)
+  } finally {
+    loadingMore.value = false
+  }
 }
 
 const scrollToBottom = () => {
@@ -98,21 +115,21 @@ const scrollToBottom = () => {
     }
   })
 }
-const handleNewMessage = async (formData) => {
+
+const handleSubmit = async (formData) => {
   const userId = parseInt(route.params.userId)
   if (isNaN(userId)) return;
-  
+
   try {
     // 添加接收者ID到表单数据
     if (!formData.has('recipient')) {
       formData.append('recipient', userId)
     }
-    
+
     // 发送消息并获取返回的结果
     const response = await messageAPI.sendMessage(formData)
     let newMessage = response.data
-    
-    
+
     if (!newMessage.sender || typeof newMessage.sender === 'number') {
       newMessage.sender = {
         id: store.user.id,
@@ -123,12 +140,12 @@ const handleNewMessage = async (formData) => {
     if (!newMessage.timestamp) {
       newMessage.timestamp = new Date().toISOString()
     }
-    
+
     // 更新本地消息列表
     if (newMessage && typeof newMessage === 'object') {
       // 检查消息是否已经存在于列表中
       const existingMessageIndex = messages.value.findIndex(msg => msg.id === newMessage.id)
-      
+
       if (existingMessageIndex !== -1) {
         // 如果已存在，更新它
         messages.value[existingMessageIndex] = newMessage
@@ -136,19 +153,24 @@ const handleNewMessage = async (formData) => {
         // 如果不存在，添加到列表末尾
         messages.value.push(newMessage)
       }
-      
+
+      // 按时间排序
+      messages.value.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+
       // 强制 Vue 重新渲染以应用新样式
       messages.value = [...messages.value]
-      
+
       // 确保在下次DOM更新后滚动到底部
       nextTick(() => {
         scrollToBottom()
       })
     }
   } catch (error) {
-    // ... 错误处理保持不变 ...
+    console.error('发送消息失败:', error)
+    alert('发送消息失败')
   }
 }
+
 const handleEditMessage = (message) => {
   editingMessage.value = message
   editContent.value = message.content
@@ -156,19 +178,19 @@ const handleEditMessage = (message) => {
 
 const saveEditMessage = async () => {
   if (!editingMessage.value || !editingMessage.value.id) return
-  
+
   try {
     const formData = new FormData()
     formData.append('content', editContent.value)
-    
+
     const response = await messageAPI.updateMessage(editingMessage.value.id, formData)
-    
+
     // 更新本地消息列表
     const index = messages.value.findIndex(msg => msg.id === editingMessage.value.id)
     if (index !== -1) {
       messages.value[index] = response.data
     }
-    
+
     // 重置编辑状态
     editingMessage.value = null
     editContent.value = ''
@@ -183,14 +205,14 @@ const handleDeleteMessage = async (message) => {
     alert('无效的消息')
     return
   }
-  
+
   if (!confirm('确定要删除这条消息吗？')) {
     return
   }
-  
+
   try {
     await messageAPI.deleteMessage(message.id)
-    
+
     // 从本地消息列表中移除
     const index = messages.value.findIndex(msg => msg.id === message.id)
     if (index !== -1) {
@@ -207,73 +229,69 @@ const cancelEditMessage = () => {
   editContent.value = ''
 }
 
-
 const handleRevokeMessage = (messageId) => {
-  const messageIndex =messages.value.findIndex(msg => msg.id ===messageId)
-  if(messageIndex!==-1){
-    messages.value[messageIndex].is_revoked=true;
+  const messageIndex = messages.value.findIndex(msg => msg.id === messageId)
+  if (messageIndex !== -1) {
+    messages.value[messageIndex].is_revoked = true;
   }
 }
 
+const handleScroll = async (event) => {
+  const { scrollTop } = event.target;
 
+  // 当滚动到顶部时加载更多消息
+  if (scrollTop <= 0 &&
+    store.currentConversation?.pagination?.has_previous &&
+    !loadingMore.value) {
+    await loadMoreMessages();
+  }
+}
 
+const goBack = () => {
+  router.push('/messages');
+}
+
+const cancelEdit = () => {
+  editingMessage.value = null;
+  editContent.value = '';
+}
 </script>
 
 <template>
   <div class="conversation-page">
-    <div class="conversation-header">
-      <button @click="router.push('/messages')" class="back-button">←</button>
-      <div class="recipient-info">
-        <div class="recipient-avatar">
-          <img 
-            v-if="recipient && recipient.avatar" 
-            :src="recipient.avatar" 
-            :alt="recipient.username"
-          >
-          <div v-else class="avatar-placeholder">
-            {{ recipient && recipient.username ? recipient.username.charAt(0).toUpperCase() : 'U' }}
-          </div>
+    <!-- 聊天头部 -->
+    <div class="chat-header">
+      <el-button icon="ArrowLeft" @click="goBack" circle class="back-button" />
+      <div class="recipient-info" v-if="recipient">
+        <el-avatar :src="recipient.avatar" :size="40" class="recipient-avatar">
+          <span v-if="!recipient.avatar">
+            {{ recipient.username?.charAt(0).toUpperCase() }}
+          </span>
+        </el-avatar>
+        <div class="recipient-details">
+          <div class="recipient-name">{{ recipient.username }}</div>
         </div>
-        <div class="recipient-name">{{ recipient && recipient.username ? recipient.username : `用户 ${route.params.userId}` }}</div>
       </div>
     </div>
-    
-    <div v-if="loading" class="loading">加载中...</div>
-    
-    <div v-else class="messages-container">
-      <div 
-        v-for="(message, index) in messages" 
-        :key="message?.id || index"
-        class="message-wrapper"
-        :class="{ 'own-message': isOwnMessage(message) }"
-      >
-        <!-- 编辑消息表单 -->
-        <div v-if="editingMessage && editingMessage.id === message.id" class="edit-form">
-          <textarea v-model="editContent" class="edit-textarea"></textarea>
-          <div class="edit-actions">
-            <button @click="saveEditMessage" class="save-button">保存</button>
-            <button @click="cancelEditMessage" class="cancel-button">取消</button>
-          </div>
+
+    <!-- 消息容器 -->
+    <div class="messages-container" @scroll="handleScroll">
+      <div class="messages-content">
+        <!-- 加载更多指示器 -->
+        <div v-if="loadingMore" class="loading-more">
+          <el-skeleton :rows="1" animated />
         </div>
-        <!-- 消息显示 -->
-        <MessageItem 
-          v-else
-          :message="message" 
-          :current-user-id="store.user?.id || 0"
-          @edit="handleEditMessage"
-          @delete="handleDeleteMessage"
-          @revoke="handleRevokeMessage"
-        />
-      </div>
-      
-      <div v-if="messages.length === 0" class="no-messages">
-        还没有消息，开始对话吧！
+
+        <!-- 消息列表 -->
+        <MessageItem v-for="message in messages" :key="message.id" :message="message"
+          :currentUserId="store.user?.id || 0" @edit-message="handleEditMessage" @delete-message="handleDeleteMessage"
+          @revoke-message="handleRevokeMessage" />
       </div>
     </div>
-    
-    <div class="message-form-container">
-      <MessageForm @send="handleNewMessage" />
-    </div>
+
+    <!-- 消息输入表单 -->
+    <MessageForm @send-message="handleSubmit" :on-send="handleSubmit" :editing-message="editingMessage"
+      :edit-content="editContent" @cancel-edit="cancelEdit" />
   </div>
 </template>
 <style scoped>
@@ -290,7 +308,7 @@ const handleRevokeMessage = (messageId) => {
   overflow: hidden;
 }
 
-.conversation-header {
+.chat-header {
   display: flex;
   align-items: center;
   padding: 15px 20px;
@@ -303,7 +321,7 @@ const handleRevokeMessage = (messageId) => {
   transition: all 0.3s ease;
 }
 
-.conversation-header:hover {
+.chat-header:hover {
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
 }
 
@@ -336,7 +354,7 @@ const handleRevokeMessage = (messageId) => {
   flex: 1;
 }
 
-.recipient-avatar img {
+.recipient-avatar {
   width: 50px;
   height: 50px;
   border-radius: 50%;
@@ -345,30 +363,10 @@ const handleRevokeMessage = (messageId) => {
   border: 3px solid #fff;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
-}
-
-.recipient-avatar img:hover {
-  transform: scale(1.05);
-}
-
-.avatar-placeholder {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #42b883, #3498db);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
-  margin-right: 15px;
-  border: 3px solid #fff;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   font-size: 1.2rem;
-  transition: all 0.3s ease;
 }
 
-.avatar-placeholder:hover {
+.recipient-avatar:hover {
   transform: scale(1.05);
 }
 
@@ -391,8 +389,6 @@ const handleRevokeMessage = (messageId) => {
   flex: 1;
   overflow-y: auto;
   padding: 20px 15px;
-  display: flex;
-  flex-direction: column;
   background: rgba(255, 255, 255, 0.6);
   border-radius: 12px;
   margin-bottom: 15px;
@@ -400,6 +396,11 @@ const handleRevokeMessage = (messageId) => {
   box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
   scrollbar-width: thin;
   scrollbar-color: #409eff #e0e0e0;
+}
+
+.messages-content {
+  display: flex;
+  flex-direction: column;
 }
 
 .messages-container::-webkit-scrollbar {
@@ -420,89 +421,10 @@ const handleRevokeMessage = (messageId) => {
   background: #337ecc;
 }
 
-.message-wrapper {
+.loading-more {
+  padding: 10px 0;
   display: flex;
-  margin-bottom: 15px;
-  animation: fadeIn 0.3s ease-out;
-}
-
-.message-wrapper.own-message {
-  justify-content: flex-end;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.edit-form {
-  width: 100%;
-  background: white;
-  border-radius: 15px;
-  padding: 20px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.edit-textarea {
-  width: 100%;
-  min-height: 100px;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  resize: vertical;
-  font-family: inherit;
-  font-size: 1rem;
-  margin-bottom: 15px;
-  transition: border-color 0.3s ease;
-}
-
-.edit-textarea:focus {
-  outline: none;
-  border-color: #409eff;
-  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
-}
-
-.edit-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.save-button, .cancel-button {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.save-button {
-  background: linear-gradient(135deg, #42b883, #3498db);
-  color: white;
-}
-
-.save-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(66, 184, 131, 0.3);
-}
-
-.cancel-button {
-  background: #f5f5f5;
-  color: #666;
-}
-
-.cancel-button:hover {
-  background: #e0e0e0;
-  transform: translateY(-2px);
+  justify-content: center;
 }
 
 .no-messages {
@@ -513,5 +435,51 @@ const handleRevokeMessage = (messageId) => {
   background: rgba(255, 255, 255, 0.5);
   border-radius: 10px;
   margin: auto;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .conversation-page {
+    padding: 10px;
+    border-radius: 10px;
+  }
+
+  .chat-header {
+    padding: 10px 15px;
+  }
+
+  .recipient-name {
+    font-size: 1.1rem;
+  }
+
+  .back-button {
+    width: 35px;
+    height: 35px;
+  }
+
+  .messages-container {
+    padding: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .conversation-page {
+    padding: 5px;
+    height: calc(100vh - 60px);
+  }
+
+  .chat-header {
+    padding: 8px 10px;
+  }
+
+  .recipient-name {
+    font-size: 1rem;
+  }
+
+  .back-button {
+    width: 30px;
+    height: 30px;
+    margin-right: 10px;
+  }
 }
 </style>

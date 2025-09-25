@@ -170,10 +170,51 @@ class MessageListView(generics.ListCreateAPIView):
     def get_queryset(self):
         user = self.request.user
         user_id = self.kwargs.get("user_id")
-        return Message.objects.filter(
-            (Q(sender=user) & Q(recipient_id=user_id))
-            | (Q(sender_id=user_id) & Q(recipient=user))
-        ).select_related("sender", "recipient")
+
+        # 添加分页支持
+        queryset = (
+            Message.objects.filter(
+                (Q(sender=user) & Q(recipient_id=user_id))
+                | (Q(sender_id=user_id) & Q(recipient=user))
+            )
+            .select_related("sender", "recipient")
+            .order_by("-timestamp")
+        )
+
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+
+        # 获取分页参数
+        page = self.request.query_params.get("page", 1)
+        page_size = self.request.query_params.get("page_size", 20)
+
+        try:
+            page = int(page)
+            page_size = int(page_size)
+        except (ValueError, TypeError):
+            page = 1
+            page_size = 20
+
+        # 应用分页
+        start = (page - 1) * page_size
+        end = start + page_size
+        paginated_queryset = queryset[start:end]
+
+        serializer = self.get_serializer(paginated_queryset, many=True)
+
+        # 返回分页信息
+        return Response(
+            {
+                "results": serializer.data,
+                "count": queryset.count(),
+                "page": page,
+                "page_size": page_size,
+                "has_next": end < queryset.count(),
+                "has_previous": page > 1,
+            }
+        )
 
 
 class MessageDetailView(generics.RetrieveUpdateDestroyAPIView):

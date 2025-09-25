@@ -97,7 +97,9 @@ export const searchAPI = {
 // 消息相关API
 export const messageAPI = {
   getConversations: () => api.get('/messages/conversations/'),
-  getMessages: (userId) => api.get(`/messages/conversations/${userId}/`), 
+  getMessages: (userId, page = 1, pageSize = 20) => api.get(`/messages/conversations/${userId}/`, {
+    params: { page, page_size: pageSize }
+  }),
   sendMessage: (messageData) => api.post('/messages/messages/', messageData), 
   updateMessage: (messageId, messageData) => api.put(`/messages/messages/${messageId}/`, messageData), 
   deleteMessage: (messageId) => api.delete(`/messages/messages/${messageId}/`), 

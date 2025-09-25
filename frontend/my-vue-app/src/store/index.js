@@ -110,18 +110,46 @@ export const useMainStore = defineStore('main', {
       }
     },
 
-    async fetchConversation(userId) {
+    async fetchConversation(userId, page = 1, pageSize = 20) {
       try {
-        const response = await messageAPI.getMessages(userId);
-        this.currentConversation = {
-          userId,
-          messages: response.data || []
-        };
+        const response = await messageAPI.getMessages(userId, page, pageSize);
         
-        // 标记所有未读消息为已读
-        if (Array.isArray(response.data)) {
+        if (page === 1) {
+          // 第一页，替换所有消息
+          this.currentConversation = {
+            userId,
+            messages: response.data.results || response.data || [],
+            pagination: {
+              count: response.data.count || 0,
+              page: response.data.page || 1,
+              page_size: response.data.page_size || 20,
+              has_next: response.data.has_next || false,
+              has_previous: response.data.has_previous || false
+            }
+          };
+        } else {
+          // 后续页面，追加消息到现有列表
+          if (this.currentConversation && this.currentConversation.userId === userId) {
+            this.currentConversation.messages = [
+              ...(response.data.results || response.data || []),
+              ...this.currentConversation.messages
+            ];
+            
+            // 更新分页信息
+            this.currentConversation.pagination = {
+              count: response.data.count || 0,
+              page: response.data.page || page,
+              page_size: response.data.page_size || pageSize,
+              has_next: response.data.has_next || false,
+              has_previous: response.data.has_previous || page > 1
+            };
+          }
+        }
+        
+        // 标记所有未读消息为已读（仅对第一页执行）
+        if (page === 1 && Array.isArray(response.data.results || response.data)) {
           // 先过滤出有效的未读消息
-          const unreadMessages = response.data.filter(msg => {
+          const unreadMessages = (response.data.results || response.data).filter(msg => {
             // 确保msg对象存在且具有必要的属性
             return msg && 
                    typeof msg === 'object' && 
@@ -149,13 +177,21 @@ export const useMainStore = defineStore('main', {
         
         // 更新全局未读计数
         await this.fetchUnreadNotificationCount();
+        
       } catch (error) {
-        console.error('Error fetching conversation:', error);
-        // 如果获取对话失败，初始化一个空的对话
-        this.currentConversation = {
-          userId,
-          messages: []
-        };
+        console.error('获取会话失败:', error);
+        throw error;
+      }
+    },
+    
+    async loadMoreMessages(userId) {
+      if (this.currentConversation && 
+          this.currentConversation.userId === userId && 
+          this.currentConversation.pagination &&
+          this.currentConversation.pagination.has_next) {
+        
+        const nextPage = this.currentConversation.pagination.page + 1;
+        await this.fetchConversation(userId, nextPage);
       }
     },
 
