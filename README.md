@@ -3,7 +3,8 @@
 这是一个基于Django和Vue.js构建的社交论坛系统，用户可以注册、发帖、评论和互动。
 
 ## 项目结构
-. ├── backend # Django后端 │ ├── accounts # 用户账户管理模块 │ ├── posts # 帖子管理模块 │ ├── interactions # 用户互动模块（点赞、关注等） │ └── myproject # Django项目配置 ├── frontend # Vue.js前端 │ └── my-vue-app # 前端应用 ├── docker-compose.yml # 开发环境Docker配置 └── docker-compose.prod.yml # 生产环境Docker配置. ├── backend # Django后端 │ ├── accounts # 用户账户管理模块 │ ├── posts # 帖子管理模块 │ ├── interactions # 用户互动模块（点赞、关注等） │ └── myproject # Django项目配置 ├── frontend # Vue.js前端 │ └── my-vue-app # 前端应用 ├── docker-compose.yml # 开发环境Docker配置 └── docker-compose.prod.yml # 生产环境Docker配置
+![项目结构](项目架构.png)
+
 ## 技术栈
 
 ### 后端
