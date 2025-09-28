@@ -175,7 +175,7 @@ const closeErrorModal = () => {
 }
 </script>
 <template>
-  <div class="message-wrapper" :class="{ 'own-message': isOwnMessage }">
+  <div :key="message.id" class="message-wrapper" :class="{ 'own-message': isOwnMessage }">
     <!-- 对方消息 -->
     <template v-if="!isOwnMessage">
       <div class="avatar-container">
