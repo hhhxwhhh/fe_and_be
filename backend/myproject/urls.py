@@ -16,10 +16,11 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.http import JsonResponse
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.static import serve
 from rest_framework_simplejwt.views import TokenRefreshView
 
 
@@ -53,5 +54,28 @@ urlpatterns = [
     path("api/messages/", include("messaging.urls")),
     path("api/ai/deepseek/", include("ai.urls")),
 ]
+
+# 显式添加静态文件服务路由
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+else:
+    # 在生产环境中也显式处理静态文件
+    urlpatterns += [
+        re_path(
+            r"^static/(?P<path>.*)$",
+            serve,
+            {
+                "document_root": settings.STATIC_ROOT,
+            },
+        ),
+    ]
+    urlpatterns += [
+        re_path(
+            r"^media/(?P<path>.*)$",
+            serve,
+            {
+                "document_root": settings.MEDIA_ROOT,
+            },
+        ),
+    ]
