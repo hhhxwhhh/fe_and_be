@@ -1,7 +1,7 @@
 """
 URL configuration for myproject project.
 
-The `urlpatterns` list routes URLs to views. For more information please see:
+The [urlpatterns](file:///Users/wang/code/fe_and_be/backend/myproject/urls.py#L23-L31) list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/5.2/topics/http/urls/
 Examples:
 Function views
@@ -17,11 +17,34 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
+from django.http import JsonResponse
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework_simplejwt.views import TokenRefreshView
 
+
+def api_root(request):
+    """
+    API根路径视图，显示可用的API端点
+    """
+    return JsonResponse(
+        {
+            "message": "欢迎使用我们的API",
+            "endpoints": {
+                "admin": "/admin/",
+                "auth": "/api/auth/",
+                "posts": "/api/posts/",
+                "interactions": "/api/interactions/",
+                "messages": "/api/messages/",
+                "ai": "/api/ai/deepseek/",
+                "token_refresh": "/api/token/refresh/",
+            },
+        }
+    )
+
+
 urlpatterns = [
+    path("", api_root, name="api-root"),
     path("admin/", admin.site.urls),
     path("api/auth/", include("accounts.urls")),
     path("api/posts/", include("posts.urls")),

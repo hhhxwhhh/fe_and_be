@@ -1,31 +1,19 @@
-# Django 核心
 Django==4.2.5
 psycopg2-binary==2.9.6
 djangorestframework==3.14.0
 django-cors-headers==4.0.0
-
-# 数据库迁移工具
 sqlparse==0.4.4
-
-# 用户认证
 dj-rest-auth==4.0.0
 django-allauth==0.54.0
-
-# 静态文件管理
 whitenoise==6.4.0
-
-# 生产环境 WSGI 服务器
 gunicorn==20.1.0
-
-# 开发和测试工具
 pytest==7.4.0
 pytest-django==4.5.2
 black==23.1.0
 flake8==6.0.0
-
 channels==4.3.1
-daphne==4.3.0
+daphne==4.2.1
 channels-redis==4.3.0
-
-#接入AI服务
 openai==0.28.1
+djangorestframework-simplejwt==5.3.0
+Pillow==10.0.0

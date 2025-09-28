@@ -61,6 +61,8 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+# ASGI应用配置
+ASGI_APPLICATION = "myproject.asgi.application"
 ROOT_URLCONF = "myproject.urls"
 
 TEMPLATES = [
@@ -121,10 +123,14 @@ TIME_ZONE = "Asia/Shanghai"
 USE_I18N = True
 
 USE_TZ = True
-BASES = {
+DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": os.environ.get("DB_ENGINE", "django.db.backends.sqlite3"),
+        "NAME": os.environ.get("DB_NAME", BASE_DIR / "db.sqlite3"),
+        "USER": os.environ.get("DB_USER"),
+        "PASSWORD": os.environ.get("DB_PASSWORD"),
+        "HOST": os.environ.get("DB_HOST"),
+        "PORT": os.environ.get("DB_PORT"),
     }
 }
 
@@ -147,7 +153,7 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ],
 }
-
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 # JWT 设置
 from datetime import timedelta
 
@@ -160,8 +166,12 @@ SIMPLE_JWT = {
 }
 # CORS 设置
 CORS_ALLOWED_ORIGINS = [
+    "http://localhost",
+    "http://localhost:80",
     "http://localhost:5173",  # Vue 开发服务器
     "http://127.0.0.1:5173",
+    "http://frontend",
+    "http://backend:8000",
 ]
 
 # 媒体文件设置
@@ -193,9 +203,19 @@ REST_FRAMEWORK = {
 
 # 添加channels配置
 ASGI_APPLICATION = "myproject.asgi.application"
-
-CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
-
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [
+                (
+                    os.environ.get("REDIS_HOST", "localhost"),
+                    int(os.environ.get("REDIS_PORT", 6379)),
+                )
+            ],
+        },
+    },
+}
 import os
 
 DEEPSEEK_API_KEY = os.environ.get(
