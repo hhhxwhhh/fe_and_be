@@ -45,6 +45,7 @@ services:
       - DB_PORT=5432
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - DEEPSEEK_API_KEY=sk-7ab60319c915461981cc306de014a2e1  # 添加这行
     depends_on:
       db:
         condition: service_healthy

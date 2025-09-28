@@ -9,8 +9,10 @@ class DeepSeekService:
         初始化DeepSeek服务
         DeepSeek API与OpenAI API兼容，可以直接使用openai库
         """
-        # 尝试从多个来源获取API密钥
-        api_key = "sk-7ab60319c915461981cc306de014a2e1"
+        # 从环境变量或settings中获取API密钥
+        api_key = os.environ.get("DEEPSEEK_API_KEY") or getattr(
+            settings, "DEEPSEEK_API_KEY", None
+        )
 
         # 如果没有获取到API密钥，则抛出异常
         if not api_key:
