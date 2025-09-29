@@ -25,8 +25,10 @@ class WebSocketService {
 
     this.isConnecting = true;
     
-    // 使用正确的WebSocket协议连接
-    const wsUrl = `ws://localhost:8000/ws/chat/?token=${token}`;
+    // 使用环境变量或默认值构建WebSocket URL
+    const wsBaseUrl = import.meta.env.VITE_WS_BASE_URL || 
+                     (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host;
+    const wsUrl = `${wsBaseUrl}/ws/chat/?token=${token}`;
     console.log('Connecting to WebSocket:', wsUrl);
     
     try {
