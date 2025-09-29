@@ -1,7 +1,13 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.utils.html import format_html
+from django.urls import path
+from django.shortcuts import render
+from django.contrib.auth.models import User as DjangoUser
 from .models import User
+from posts.models import Post
+from interactions.models import Like, Notification
+from messaging.models import Message
 
 
 @admin.register(User)
@@ -63,6 +69,27 @@ class CustomUserAdmin(UserAdmin):
             },
         ),
     )
+
+    def get_urls(self):
+        urls = super().get_urls()
+        from accounts.admin_views import statistics_view
+        custom_urls = [
+            path('statistics/', statistics_view, name='accounts_statistics'),
+        ]
+        return custom_urls + urls
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        
+        # 添加统计信息到用户管理页面
+        extra_context['statistics'] = {
+            'total_users': User.objects.count(),
+            'total_posts': Post.objects.count(),
+            'total_likes': Like.objects.count(),
+            'total_messages': Message.objects.count(),
+        }
+        
+        return super().changelist_view(request, extra_context)
 
     def get_followers_count(self, obj):
         return obj.followers.count()

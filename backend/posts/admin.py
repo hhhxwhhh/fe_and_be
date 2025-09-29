@@ -1,5 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
+from django.urls import path
+from django.shortcuts import render
 from .models import Post, Comment
 
 
@@ -18,6 +20,50 @@ class PostAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at", "updated_at", "image_preview")
     date_hierarchy = "created_at"
     raw_id_fields = ("author",)
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                "statistics/",
+                self.admin_site.admin_view(self.statistics_view),
+                name="posts_statistics",
+            ),
+        ]
+        return custom_urls + urls
+
+    def statistics_view(self, request):
+        # 获取帖子相关的统计数据
+        from django.db.models import Count
+        from django.utils import timezone
+        from datetime import timedelta
+
+        # 总帖数
+        total_posts = Post.objects.count()
+
+        # 热门帖子排行
+        popular_posts = Post.objects.annotate(comment_count=Count("comments")).order_by(
+            "-comment_count"
+        )[:5]
+
+        # 发帖趋势（最近7天）
+        week_ago = timezone.now() - timedelta(days=7)
+        post_trend_data = []
+        for i in range(7):
+            day = week_ago + timedelta(days=i)
+            next_day = day + timedelta(days=1)
+            count = Post.objects.filter(
+                created_at__gte=day, created_at__lt=next_day
+            ).count()
+            post_trend_data.append({"date": day.strftime("%Y-%m-%d"), "count": count})
+
+        context = dict(
+            self.admin_site.each_context(request),
+            total_posts=total_posts,
+            popular_posts=popular_posts,
+            post_trend_data=post_trend_data,
+        )
+        return render(request, "admin/posts_statistics.html", context)
 
     def content_preview(self, obj):
         return obj.content[:50] + "..." if len(obj.content) > 50 else obj.content

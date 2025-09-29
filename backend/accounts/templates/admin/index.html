@@ -1,0 +1,36 @@
+{% extends "admin/index.html" %}
+{% load static %}
+
+{% block content %}
+<!-- 添加统计面板 -->
+<div class="module" style="margin-bottom: 20px;">
+    <h2>平台统计</h2>
+    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 200px; background: #f8f9fa; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h3 style="margin-top: 0;">总用户数</h3>
+            <p style="font-size: 2em; font-weight: bold; color: #007bff;">{{ statistics.total_users }}</p>
+        </div>
+        
+        <div style="flex: 1; min-width: 200px; background: #f8f9fa; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h3 style="margin-top: 0;">总帖子数</h3>
+            <p style="font-size: 2em; font-weight: bold; color: #28a745;">{{ statistics.total_posts }}</p>
+        </div>
+        
+        <div style="flex: 1; min-width: 200px; background: #f8f9fa; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h3 style="margin-top: 0;">总点赞数</h3>
+            <p style="font-size: 2em; font-weight: bold; color: #ffc107;">{{ statistics.total_likes }}</p>
+        </div>
+        
+        <div style="flex: 1; min-width: 200px; background: #f8f9fa; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h3 style="margin-top: 0;">总消息数</h3>
+            <p style="font-size: 2em; font-weight: bold; color: #dc3545;">{{ statistics.total_messages }}</p>
+        </div>
+    </div>
+    <div style="margin-top: 15px;">
+        <a href="{% url 'admin:accounts_statistics' %}" class="button" style="background-color: #007bff; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px;">查看详细统计信息</a>
+    </div>
+</div>
+
+<!-- 显示默认的管理界面内容 -->
+{{ block.super }}
+{% endblock %}
