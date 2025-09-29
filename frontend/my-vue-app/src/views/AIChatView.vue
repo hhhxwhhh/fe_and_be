@@ -19,17 +19,13 @@
         </div>
 
         <div class="content-wrapper">
-            <el-row :gutter="24">
+            <el-row :gutter="20">
                 <el-col :xs="24" :sm="24" :md="16" :lg="18">
                     <div class="chat-container">
+                        <!-- 历史对话区域 -->
                         <div class="history-section" v-if="chatHistory.length">
                             <div class="section-header">
-                                <h2>
-                                    <el-icon>
-                                        <Clock />
-                                    </el-icon>
-                                    对话历史
-                                </h2>
+                                <h2>对话历史</h2>
                                 <el-button type="danger" plain size="small" @click="clearHistory">
                                     清空历史
                                 </el-button>
@@ -62,7 +58,7 @@
                                             <div class="message-header">
                                                 <span class="username">AI助手</span>
                                                 <span class="usage-info">Tokens: {{ chat.usage?.total_tokens || 'N/A'
-                                                    }}</span>
+                                                }}</span>
                                             </div>
                                             <div class="message-text">{{ chat.response }}</div>
                                             <div class="message-actions">
@@ -85,14 +81,10 @@
                             </div>
                         </div>
 
+                        <!-- 新对话输入区域 -->
                         <div class="input-section">
                             <div class="section-header">
-                                <h2>
-                                    <el-icon>
-                                        <EditPen />
-                                    </el-icon>
-                                    开始新对话
-                                </h2>
+                                <h2>开始新对话</h2>
                             </div>
                             <AIChatInput @response-generated="addToHistory" ref="aiChatInput" />
                         </div>
@@ -101,7 +93,7 @@
 
                 <el-col :xs="24" :sm="24" :md="8" :lg="6">
                     <div class="sidebar">
-                        <el-card class="feature-card" shadow="hover">
+                        <el-card class="feature-card" shadow="never">
                             <template #header>
                                 <div class="card-header">
                                     <el-icon>
@@ -144,11 +136,11 @@
                             </ul>
                         </el-card>
 
-                        <el-card class="feature-card" shadow="hover">
+                        <el-card class="feature-card" shadow="never">
                             <template #header>
                                 <div class="card-header">
                                     <el-icon>
-                                        <MagicStick />
+                                        <Lightning />
                                     </el-icon>
                                     <span>使用提示</span>
                                 </div>
@@ -181,7 +173,7 @@
                             </ul>
                         </el-card>
 
-                        <el-card class="feature-card" shadow="hover">
+                        <el-card class="feature-card" shadow="never">
                             <template #header>
                                 <div class="card-header">
                                     <el-icon>
@@ -212,14 +204,13 @@ import {
     MagicStick,
     CopyDocument,
     Refresh,
-    Clock,
-    EditPen,
     Star,
     Edit,
     Document,
     QuestionFilled,
     InfoFilled,
-    Setting
+    Setting,
+    Lightning
 } from '@element-plus/icons-vue';
 import AIChatInput from '../components/AIChatInput.vue';
 
@@ -232,14 +223,13 @@ export default {
         MagicStick,
         CopyDocument,
         Refresh,
-        Clock,
-        EditPen,
         Star,
         Edit,
         Document,
         QuestionFilled,
         InfoFilled,
-        Setting
+        Setting,
+        Lightning
     },
     data() {
         return {
@@ -292,11 +282,11 @@ export default {
 .ai-chat-page {
     padding: 0;
     height: calc(100vh - 60px);
-    background: linear-gradient(135deg, #f5f7fa 0%, #e4edf9 100%);
+    background: linear-gradient(135deg, #f0f2f5 0%, #e6e9f0 100%);
 }
 
 .page-header {
-    background: linear-gradient(135deg, #4a90e2 0%, #6a5af9 100%);
+    background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
     padding: 15px 30px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
@@ -331,7 +321,7 @@ export default {
 }
 
 .content-wrapper {
-    padding: 24px;
+    padding: 20px;
     height: calc(100% - 80px);
     overflow-y: auto;
 }
@@ -339,7 +329,7 @@ export default {
 .chat-container {
     background: white;
     border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
     padding: 24px;
     height: 100%;
     display: flex;
@@ -362,20 +352,23 @@ export default {
     align-items: center;
     gap: 10px;
     font-size: 20px;
+    font-weight: 600;
 }
 
 .history-list {
     flex: 1;
     overflow-y: auto;
     padding-right: 10px;
+    margin-bottom: 20px;
 }
 
 .chat-item {
-    margin-bottom: 30px;
-    background: #fafafa;
+    margin-bottom: 25px;
+    background: #fafbff;
     border-radius: 12px;
     padding: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    border: 1px solid #f0f2f5;
 }
 
 .chat-header,
@@ -401,12 +394,12 @@ export default {
 }
 
 .user-avatar {
-    background: #4a90e2;
+    background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
     color: white;
 }
 
 .ai-avatar {
-    background: linear-gradient(135deg, #6a5af9 0%, #4a90e2 100%);
+    background: linear-gradient(135deg, #7209b7 0%, #f72585 100%);
     color: white;
 }
 
@@ -437,7 +430,8 @@ export default {
     border-radius: 10px;
     line-height: 1.6;
     white-space: pre-wrap;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+    border: 1px solid #f0f2f5;
 }
 
 .message-actions {
@@ -449,25 +443,28 @@ export default {
 .input-section {
     margin-top: auto;
     padding-top: 20px;
+    border-top: 1px solid #eee;
 }
 
 .sidebar {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 20px;
     height: 100%;
 }
 
 .feature-card {
     border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
     border: none;
+    background: #fafbff;
 }
 
 .feature-card :deep(.el-card__header) {
-    background: #f8f9fa;
-    border-bottom: 1px solid #eee;
+    background: #f0f2f5;
+    border-bottom: 1px solid #e2e5ec;
     padding: 15px 20px;
+    border-radius: 12px 12px 0 0 !important;
 }
 
 .card-header {
@@ -489,7 +486,7 @@ export default {
     display: flex;
     align-items: flex-start;
     gap: 10px;
-    border-bottom: 1px solid #f5f5f5;
+    border-bottom: 1px solid #f0f2f5;
 }
 
 .feature-list li:last-child {
@@ -497,7 +494,7 @@ export default {
 }
 
 .feature-list li .el-icon {
-    color: #4a90e2;
+    color: #4361ee;
     margin-top: 2px;
 }
 
@@ -505,6 +502,7 @@ export default {
     margin: 0 0 15px 0;
     line-height: 1.6;
     color: #606266;
+    font-size: 14px;
 }
 
 .model-info {

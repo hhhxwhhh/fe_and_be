@@ -198,15 +198,25 @@ class LikeView(APIView):
             like, created = Like.objects.get_or_create(user=request.user, post=post)
             if not created:
                 like.delete()
-                return Response({"message": "Unliked", "liked": False})
-            if post.author != request.user:
-                Notification.objects.create(
-                    recipient=post.author,
-                    actor=request.user,
-                    notification_type="like",
-                    post=post,
-                )
-            return Response({"message": "Liked", "liked": True})
+                liked = False
+            else:
+                liked = True
+                if post.author != request.user:
+                    Notification.objects.create(
+                        recipient=post.author,
+                        actor=request.user,
+                        notification_type="like",
+                        post=post,
+                    )
+            # 返回当前点赞状态和数量
+            likes_count = post.likes.count()
+            return Response(
+                {
+                    "message": "Liked" if liked else "Unliked",
+                    "liked": liked,
+                    "likes_count": likes_count,
+                }
+            )
         except Post.DoesNotExist:
             return Response(
                 {"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND
@@ -218,8 +228,14 @@ class LikeView(APIView):
             like = Like.objects.filter(user=request.user, post=post)
             if like.exists():
                 like.delete()
-                return Response({"message": "Unliked", "liked": False})
-            return Response({"message": "Post not liked", "liked": False})
+                liked = False
+            else:
+                liked = False
+            # 返回当前点赞状态和数量
+            likes_count = post.likes.count()
+            return Response(
+                {"message": "Unliked", "liked": liked, "likes_count": likes_count}
+            )
         except Post.DoesNotExist:
             return Response(
                 {"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND

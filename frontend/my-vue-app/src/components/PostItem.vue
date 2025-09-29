@@ -20,21 +20,27 @@ const showComments = ref(false)
 
 const toggleLike = async () => {
   try {
-    const response = await likeAPI.likePost(props.post.id);
-    props.post.is_liked=response.data.liked;
-    if(response.data.liked){
-      props.post.likes_count = (props.post.likes_count || 0)+1;
-    }else{
-      props.post.likes_count = Math.max(0, props.post.likes_count-1);
+    let response;
+    // 根据当前点赞状态决定调用哪个API方法
+    if (props.post.is_liked) {
+      // 当前已点赞，需要取消点赞
+      response = await likeAPI.unlikePost(props.post.id);
+    } else {
+      // 当前未点赞，需要点赞
+      response = await likeAPI.likePost(props.post.id);
     }
-    store.toggleLike(props.post.id,response.data.liked);
+
+    // 使用后端返回的数据更新前端状态
+    props.post.is_liked = response.data.liked;
+    props.post.likes_count = response.data.likes_count;
+    store.toggleLike(props.post.id, response.data.liked);
   } catch (error) {
-    console.error('点赞操作失败:', error)
+    console.error('点赞操作失败:', error);
   }
 }
 
 const handleCommentAdded = (newComment) => {
-  if(!props.post.comments){
+  if (!props.post.comments) {
     props.post.comments = [];
   }
   //props.post.comments.push(newComment); 避免重复进行添加
@@ -58,24 +64,24 @@ const followUser = async (userId) => {
     await authAPI.followUser(userId);
     props.post.is_following = true;
     // 更新当前用户 
-    if(store.user && store.user.id === userId){
+    if (store.user && store.user.id === userId) {
       store.user.is_following = true;
       store.user.follwoing_count += 1;
     }
-  } catch(error){
+  } catch (error) {
     console.error('关注用户失败:', error)
   }
 }
 
 const unfollowUser = async (userId) => {
-  try{
+  try {
     await authAPI.unfollowUser(userId);
     props.post.is_following = false;
-    if(store.user && store.user.id === userId){
+    if (store.user && store.user.id === userId) {
       store.user.is_following = false;
       store.user.followers_count -= 1;
     }
-  } catch(error){
+  } catch (error) {
     console.error('取消关注失败:', error)
   }
 }
@@ -91,32 +97,24 @@ const goToUserProfile = (userId) => {
       <div class="post-author">
         <h3 @click="goToUserProfile(post.author_id)" class="author-link">{{ post.author }}</h3>
         <div v-if="store.user && store.user.id !== post.author_id" class="follow-actions">
-          <button 
-            v-if="!post.is_following" 
-            @click="followUser(post.author_id)"
-            class="follow-button"
-          >
+          <button v-if="!post.is_following" @click="followUser(post.author_id)" class="follow-button">
             关注
           </button>
-          <button 
-            v-else 
-            @click="unfollowUser(post.author_id)"
-            class="unfollow-button"
-          >
+          <button v-else @click="unfollowUser(post.author_id)" class="unfollow-button">
             已关注
           </button>
         </div>
       </div>
       <span class="post-date">{{ new Date(post.created_at).toLocaleString() }}</span>
     </div>
-    
+
     <div class="post-content">
       <p>{{ post.content }}</p>
       <div v-if="post.image" class="post-image">
         <img :src="post.image" alt="Post image" />
       </div>
     </div>
-    
+
     <div class="post-actions">
       <button @click="toggleLike" :class="{ liked: post.is_liked }" class="action-button">
         <span class="heart-icon" :class="{ filled: post.is_liked }">❤</span>
@@ -126,11 +124,12 @@ const goToUserProfile = (userId) => {
         <span class="comment-icon">💬</span>
         {{ post.comments ? post.comments.length : 0 }}
       </button>
-      <button v-if="store.user && store.user.id === post.author_id" @click="deletePost" class="action-button delete-button">
+      <button v-if="store.user && store.user.id === post.author_id" @click="deletePost"
+        class="action-button delete-button">
         <span class="delete-icon">🗑</span>
       </button>
     </div>
-    
+
     <div v-if="showComments" class="post-comments">
       <div class="comments-list">
         <div v-for="comment in post.comments" :key="comment.id" class="comment">
@@ -149,17 +148,13 @@ const goToUserProfile = (userId) => {
           暂无评论，来抢沙发吧！
         </div>
       </div>
-      
-      <CommentForm 
-        :post-id="post.id" 
-        @comment-added="handleCommentAdded"
-      />
+
+      <CommentForm :post-id="post.id" @comment-added="handleCommentAdded" />
     </div>
   </div>
 </template>
 
 <style scoped>
-
 .comment-image {
   margin-top: 0.5rem;
 }
@@ -215,7 +210,8 @@ const goToUserProfile = (userId) => {
   color: #42b883;
 }
 
-.follow-button, .unfollow-button {
+.follow-button,
+.unfollow-button {
   padding: 0.4rem 0.8rem;
   border: none;
   border-radius: 20px;
