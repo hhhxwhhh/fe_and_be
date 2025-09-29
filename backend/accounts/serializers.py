@@ -11,6 +11,7 @@ class UserSeralizers(serializers.ModelSerializer):
     followers_count = serializers.SerializerMethodField()
     following_count = serializers.SerializerMethodField()
     is_following = serializers.SerializerMethodField()
+    avatar = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -28,6 +29,14 @@ class UserSeralizers(serializers.ModelSerializer):
             "password",
         )
         read_only_fields = ("id",)
+
+    def get_avatar(self, obj):
+        if obj.avatar:
+            request = self.context.get("request")
+            if request:
+                return request.build_absolute_uri(obj.avatar.url)
+            return obj.avatar.url
+        return None
 
     def get_followers_count(self, obj):
         return obj.followers.count()

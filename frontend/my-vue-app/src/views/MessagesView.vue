@@ -18,15 +18,23 @@ onMounted(async () => {
   }
 })
 
-const openConversation = async (userId) => {
-  // 确保 userId 是有效的
-  if (!userId || isNaN(userId)) {
-    console.error('Invalid user ID:', userId)
-    return
-  }
+const openConversation = async (conversation) => {
+  // 检查是否是群聊（通过是否有member_count属性判断）
+  if (conversation.hasOwnProperty('member_count')) {
+    // 群聊
+    router.push(`/group-chat/${conversation.id}`);
+  } else {
+    // 私聊
+    const userId = conversation.user?.id || conversation.id;
+    // 确保 userId 是有效的
+    if (!userId || isNaN(userId)) {
+      console.error('Invalid user ID:', userId)
+      return
+    }
 
-  await store.fetchConversation(userId);
-  router.push(`/messages/${userId}`);
+    await store.fetchConversation(userId);
+    router.push(`/messages/${userId}`);
+  }
 }
 
 </script>
@@ -39,11 +47,14 @@ const openConversation = async (userId) => {
 
     <div class="conversations-list">
       <div v-for="conversation in conversations" :key="conversation.user?.id || conversation.id"
-        class="conversation-item" @click="openConversation(conversation.user?.id || conversation.id)">
+        class="conversation-item" @click="openConversation(conversation)">
         <div class="user-avatar">
-          <img v-if="conversation.user?.avatar" :src="conversation.user.avatar" :alt="conversation.user?.username">
+          <img v-if="conversation.user?.avatar || conversation.avatar"
+            :src="conversation.user?.avatar || conversation.avatar"
+            :alt="conversation.user?.username || conversation.name">
           <div v-else class="avatar-placeholder">
-            {{ conversation.user?.username?.charAt(0).toUpperCase() || 'U' }}
+            {{ (conversation.user?.username?.charAt(0).toUpperCase() || conversation.name?.charAt(0).toUpperCase()) ||
+            'U' }}
           </div>
         </div>
         <div class="conversation-info">
@@ -54,7 +65,7 @@ const openConversation = async (userId) => {
           <div class="timestamp">
             {{ new Date(conversation.last_message?.timestamp || Date.now()).toLocaleDateString() }}
           </div>
-          <div v-if="conversation.unread_count > 0" class="unread-count">
+          <div v-if="(conversation.unread_count || 0) > 0" class="unread-count">
             {{ conversation.unread_count }}
           </div>
         </div>
@@ -66,6 +77,7 @@ const openConversation = async (userId) => {
     </div>
   </div>
 </template>
+
 <style scoped>
 .messages-page {
   max-width: 800px;
