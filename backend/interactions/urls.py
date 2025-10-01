@@ -7,7 +7,6 @@ from .views import (
 )
 
 urlpatterns = [
-    # ... existing paths ...
     path("notifications/", NotificationListView.as_view(), name="notification-list"),
     path(
         "notifications/<int:pk>/read/",

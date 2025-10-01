@@ -23,6 +23,7 @@ from rest_framework.pagination import PageNumberPagination
 from posts.models import Post
 from posts.serializers import PostSeralizers
 from interactions.models import Notification
+from interactions.services import NotificationService
 from rest_framework import filters
 
 
@@ -115,9 +116,7 @@ class FollowView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             request.user.following.add(user_to_follow)
-            Notification.objects.create(
-                recipient=user_to_follow, actor=request.user, notification_type="follow"
-            )
+            NotificationService.create_follow_notification(request.user, user_to_follow)
             return Response(
                 {"message": f"You are now following {user_to_follow.username}"}
             )

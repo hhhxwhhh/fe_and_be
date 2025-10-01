@@ -11,6 +11,7 @@ from interactions.models import Like
 from django.contrib.auth import get_user_model
 from django.db import models
 from rest_framework.parsers import MultiPartParser, FormParser
+from interactions.services import NotificationService
 
 # Create your views here.
 User = get_user_model()
@@ -155,13 +156,7 @@ class CommentView(APIView):
             if serializer.is_valid():
                 comment = serializer.save(author=request.user, post=post)
                 if post.author != request.user:
-                    Notification.objects.create(
-                        recipient=post.author,
-                        actor=request.user,
-                        notification_type="comment",
-                        post=post,
-                        comment=comment.content,
-                    )
+                    NotificationService.create_comment_notification(comment)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -202,12 +197,7 @@ class LikeView(APIView):
             else:
                 liked = True
                 if post.author != request.user:
-                    Notification.objects.create(
-                        recipient=post.author,
-                        actor=request.user,
-                        notification_type="like",
-                        post=post,
-                    )
+                    NotificationService.create_like_notification(like)
             # 返回当前点赞状态和数量
             likes_count = post.likes.count()
             return Response(

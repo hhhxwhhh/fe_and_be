@@ -1,38 +1,40 @@
-from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
+from rest_framework.generics import ListAPIView, UpdateAPIView
 from .models import Notification
 from .serializers import NotificationSerializer
 
 
-# Create your views here.
-class NotificationListView(APIView):
+class NotificationListView(ListAPIView):
+    serializer_class = NotificationSerializer
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        notifications = Notification.objects.filter(recipient=request.user)
-        serializer = NotificationSerializer(notifications, many=True)
-        return Response(serializer.data)
+    def get_queryset(self):
+        return Notification.objects.filter(recipient=self.request.user).order_by('-created_at')
 
 
-class NotificationMarkAsReadView(APIView):
+class NotificationMarkAsReadView(UpdateAPIView):
+    serializer_class = NotificationSerializer
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, pk):
-        try:
-            notification = Notification.objects.get(id=pk, recipient=request.user)
-            notification.is_read = True
-            notification.save()
-            return Response(
-                {"message": "Notification marked as read", "status": "success"}
-            )
-        except Notification.DoesNotExist:
-            return Response(
-                {"message": "Notification not found", "status": "error"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+    def get_queryset(self):
+        return Notification.objects.filter(recipient=self.request.user)
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.is_read = True
+        instance.save()
+        serializer = self.get_serializer(instance)
+        return Response({
+            "message": "Notification marked as read",
+            "status": "success",
+            "data": serializer.data
+        })
+    
+    def post(self, request,*args, **kwargs):
+        return self.update(request, *args, **kwargs)
 
 
 class NotificationMarkAllAsReadView(APIView):
