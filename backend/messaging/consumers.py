@@ -9,11 +9,13 @@ User = get_user_model()
 
 
 class ChatConsumer(AsyncJsonWebsocketConsumer):
+    online_users = set()
     async def connect(self):
         user = self.scope["user"]
         if user.is_anonymous:
             await self.close()
         else:
+            self.online_users.add(user.id)
             # 私聊房间
             self.private_room_name = f"user_{user.id}"
             await self.channel_layer.group_add(
@@ -28,9 +30,17 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
             await self.accept()
 
+            await self.send(text_data=json.dumps({
+                "type":"connection_established",
+                "user_id": user.id,
+                "message": "websocket 连接成功"
+            }))
+            await self.broadcast_user_status(user.id,"online")
+
     async def disconnect(self, close_code):
         user = self.scope["user"]
         if not user.is_anonymous:
+            self.online_users.discard(user.id)
             # 离开私聊房间
             await self.channel_layer.group_discard(
                 self.private_room_name, self.channel_name
@@ -41,11 +51,54 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             for group_id in group_chats:
                 room_name = f"group_{group_id}"
                 await self.channel_layer.group_discard(room_name, self.channel_name)
+            
+            await self.broadcast_user_status(user.id, "offline")
+
+    async def broadcast_user_status(self,user_id,status):
+        group_chats=await self.get_user_group_chats(user_id)
+        for group_id in group_chats:
+            room_name=f"group_{group_id}"
+            await self.channel_layer.group_send(
+                room_name,
+                {
+                    "type": "user_status",
+                    "user_id": user_id,
+                    "status": status,
+                }
+            )
+        followers=await self.get_user_followers(user_id)
+        for follower_id in followers:
+            room_name=f"user_{follower_id}"
+            await self.channel_layer.group_send(
+                room_name,
+                {
+                    "type": "user_status",
+                    "user_id": user_id,
+                    "status": status,
+                }
+            )
+    async def user_status(self,event):
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "user_status",
+                    "user_id": event["user_id"],
+                    "status": event["status"],
+                }
+            )
+        )
+    @database_sync_to_async
+    def get_user_followers(self,user_id):
+        """获取所有关注该用户的id"""
+        try:
+            user=User.objects.get(id=user_id)
+            return list(user.followers.values_list("id", flat=True))
+        except User.DoesNotExist:
+            return []
 
     async def receive(self, text_data):
         data = json.loads(text_data)
         message_type = data.get("type")
-
         if message_type == "private_message":
             await self.handle_private_message(data)
         elif message_type == "group_message":
@@ -54,6 +107,12 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             await self.handle_read(data)
         elif message_type == "join_group":
             await self.handle_join_group(data)
+        elif message_type == "heartbeat":
+            # 心跳响应
+            await self.send(text_data=json.dumps({
+                "type": "heartbeat",
+                "timestamp": data.get("timestamp")
+            }))
 
     async def handle_private_message(self, data):
         """处理私聊消息"""
@@ -105,7 +164,29 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     async def handle_read(self, data):
         """处理消息已读"""
         message_id = data.get("message_id")
-        await self.mark_as_read(message_id)
+        message= await self.mark_as_read(message_id)
+        if message:
+            sender_group_name=f"user_{message.sender.id}"
+            await self.channel_layer.group_send(
+                sender_group_name,
+                {
+                    "type":"message_read",
+                    "message_id":message_id,
+                    "read_by":self.scope["user"].id
+                }
+            )
+
+    async def message_read(self,event):
+        """确认消息已读并发送给客户端"""
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "message_read",
+                    "message_id": event["message_id"],
+                    "read_by": event["read_by"],
+                }
+            )
+        )
 
     async def handle_join_group(self, data):
         """处理用户加入群聊房间"""
