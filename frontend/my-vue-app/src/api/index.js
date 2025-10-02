@@ -54,6 +54,10 @@ export const authAPI = {
   userProfile: (userId) => api.get(`/auth/${userId}/`),
   updateProfile: (userData) => api.put("/auth/profile/", userData),
   getUsers: () => api.get("/auth/users/"),
+  searchUsers: (query) =>
+    api.get("/auth/search/", { params: { search: query } }),
+  followUser: (userId) => api.post(`/auth/${userId}/follow/`),
+  unfollowUser: (userId) => api.post(`/auth/${userId}/unfollow/`),
 };
 
 // 帖子相关API
@@ -65,6 +69,8 @@ export const postAPI = {
   updatePost: (id, postData) => api.put(`/posts/${id}/`, postData),
   deletePost: (id) => api.delete(`/posts/${id}/`),
   getUserPosts: (userId) => api.get(`/posts/user/${userId}/`),
+  searchPosts: (query) =>
+    api.get("/posts/search/posts/", { params: { search: query } }),
 };
 
 // 评论相关API
@@ -96,6 +102,10 @@ export const searchAPI = {
     api.get(`/posts/search/`, {
       params: { q: query, type },
     }),
+  searchUsers: (query) =>
+    api.get(`/auth/search/`, { params: { search: query } }),
+  searchPosts: (query) =>
+    api.get(`/posts/search/posts/`, { params: { search: query } }),
 };
 
 // 消息相关API

@@ -1,93 +1,118 @@
 <template>
     <div class="search-page">
         <div class="search-header">
-            <div class="search-input-container">
-                <el-input v-model="searchQuery" placeholder="搜索用户或帖子..." class="search-input" size="large"
-                    @keyup.enter="performSearch">
-                    <template #prefix>
-                        <el-icon>
-                            <Search />
-                        </el-icon>
-                    </template>
-                </el-input>
-                <el-button type="primary" @click="performSearch" size="large" class="search-button">
-                    搜索
-                </el-button>
-            </div>
-
-            <div class="search-filters">
-                <el-radio-group v-model="searchType" @change="performSearch">
-                    <el-radio-button label="all">全部</el-radio-button>
-                    <el-radio-button label="posts">帖子</el-radio-button>
-                    <el-radio-button label="users">用户</el-radio-button>
-                </el-radio-group>
-            </div>
+            <el-input v-model="searchQuery" placeholder="搜索用户或帖子..." class="search-input" size="large"
+                @keyup.enter="performSearch">
+                <template #prefix>
+                    <el-icon>
+                        <Search />
+                    </el-icon>
+                </template>
+                <template #append>
+                    <el-button :icon="Search" @click="performSearch" />
+                </template>
+            </el-input>
         </div>
 
-        <div class="search-results" v-loading="loading">
-            <div v-if="!loading && !searchQuery" class="empty-placeholder">
-                <el-icon>
-                    <Search />
-                </el-icon>
-                <p>请输入关键词进行搜索</p>
-            </div>
+        <div class="search-content">
+            <el-tabs v-model="activeTab" @tab-change="handleTabChange">
+                <el-tab-pane label="用户" name="users">
+                    <div v-if="loading" class="loading">
+                        <el-skeleton :rows="5" animated />
+                    </div>
 
-            <div v-else-if="!loading && searchQuery && !hasResults" class="no-results">
-                <el-icon>
-                    <Document />
-                </el-icon>
-                <p>没有找到与 "{{ searchQuery }}" 相关的结果</p>
-            </div>
-
-            <div v-else>
-                <!-- 用户搜索结果 -->
-                <div v-if="searchType === 'all' || searchType === 'users'" class="results-section">
-                    <h3>用户 ({{ users.length }})</h3>
-                    <div class="users-grid">
-                        <div v-for="user in users" :key="user.id" class="user-card" @click="goToUserProfile(user.id)">
-                            <el-avatar :size="50" :src="user.avatar" class="user-avatar">
+                    <div v-else-if="users.length > 0" class="search-results">
+                        <div v-for="user in users" :key="user.id" class="user-item" @click="goToUserProfile(user.id)">
+                            <el-avatar :src="user.avatar" :size="50">
                                 {{ user.username.charAt(0).toUpperCase() }}
                             </el-avatar>
                             <div class="user-info">
-                                <h4 class="username">{{ user.username }}</h4>
-                                <p class="user-bio">{{ user.bio || '暂无简介' }}</p>
+                                <div class="username">{{ user.username }}</div>
+                                <div class="user-bio">{{ user.bio || '暂无简介' }}</div>
+                                <div class="user-stats">
+                                    <span>粉丝: {{ user.followers_count || 0 }}</span>
+                                    <span>关注: {{ user.following_count || 0 }}</span>
+                                </div>
+                            </div>
+                            <div class="user-actions">
+                                <el-button v-if="!user.is_following && user.id !== currentUser.id" type="primary"
+                                    size="small" @click.stop="followUser(user)" :loading="followingLoading[user.id]">
+                                    关注
+                                </el-button>
+                                <el-button v-else-if="user.is_following && user.id !== currentUser.id" size="small"
+                                    @click.stop="unfollowUser(user)" :loading="followingLoading[user.id]">
+                                    已关注
+                                </el-button>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- 帖子搜索结果 -->
-                <div v-if="searchType === 'all' || searchType === 'posts'" class="results-section">
-                    <h3>帖子 ({{ posts.length }})</h3>
-                    <div class="posts-list">
-                        <PostItem v-for="post in posts" :key="post.id" :post="post" @post-deleted="handlePostDeleted" />
+                    <div v-else-if="searchQuery && !loading" class="no-results">
+                        <el-empty description="没有找到相关用户" />
                     </div>
-                </div>
-            </div>
+                </el-tab-pane>
+
+                <el-tab-pane label="帖子" name="posts">
+                    <div v-if="loading" class="loading">
+                        <el-skeleton :rows="5" animated />
+                    </div>
+
+                    <div v-else-if="posts.length > 0" class="search-results">
+                        <div v-for="post in posts" :key="post.id" class="post-item" @click="goToPost(post.id)">
+                            <div class="post-header">
+                                <el-avatar :src="post.author.avatar" :size="40">
+                                    {{ post.author.username.charAt(0).toUpperCase() }}
+                                </el-avatar>
+                                <div class="post-author">
+                                    <div class="author-name">{{ post.author.username }}</div>
+                                    <div class="post-time">{{ formatTime(post.created_at) }}</div>
+                                </div>
+                            </div>
+                            <div class="post-content">
+                                {{ post.content }}
+                            </div>
+                            <div class="post-stats">
+                                <span><i class="el-icon-chat-dot-round"></i> {{ post.comments_count || 0 }}</span>
+                                <span><i class="el-icon-thumb"></i> {{ post.likes_count || 0 }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-else-if="searchQuery && !loading" class="no-results">
+                        <el-empty description="没有找到相关帖子" />
+                    </div>
+                </el-tab-pane>
+            </el-tabs>
         </div>
     </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElInput, ElButton, ElIcon, ElRadioGroup, ElRadioButton, ElAvatar } from 'element-plus'
-import { Search, Document } from '@element-plus/icons-vue'
-import { searchAPI } from '../api'
-import PostItem from './PostItem.vue'
+import { useRoute, useRouter } from 'vue-router'
+import { Search } from '@element-plus/icons-vue'
+import { searchAPI, authAPI, postAPI } from '@/api'
+import { useMainStore } from '@/store'
 
+const route = useRoute()
 const router = useRouter()
+const store = useMainStore()
 
-// 搜索相关数据
-const searchQuery = ref('')
-const searchType = ref('all')
-const loading = ref(false)
+const searchQuery = ref(route.query.q || '')
+const activeTab = ref('users')
 const users = ref([])
 const posts = ref([])
+const loading = ref(false)
+const followingLoading = ref({})
 
-// 计算属性
-const hasResults = computed(() => {
-    return users.value.length > 0 || posts.value.length > 0
+// 获取当前用户
+const currentUser = computed(() => store.user)
+
+// 页面加载时执行搜索
+onMounted(() => {
+    if (searchQuery.value) {
+        performSearch()
+    }
 })
 
 // 执行搜索
@@ -99,45 +124,71 @@ const performSearch = async () => {
     }
 
     loading.value = true
-
     try {
-        const response = await searchAPI.search(searchQuery.value, searchType.value)
-        const results = response.data.results
-
-        users.value = results.users || []
-        posts.value = results.posts || []
+        if (activeTab.value === 'users') {
+            const response = await searchAPI.searchUsers(searchQuery.value)
+            users.value = response.data
+            posts.value = []
+        } else if (activeTab.value === 'posts') {
+            const response = await searchAPI.searchPosts(searchQuery.value)
+            posts.value = response.data
+            users.value = []
+        }
     } catch (error) {
         console.error('搜索失败:', error)
-        users.value = []
-        posts.value = []
     } finally {
         loading.value = false
     }
 }
 
-// 跳转到用户资料页
+// 处理标签页切换
+const handleTabChange = () => {
+    performSearch()
+}
+
+// 关注用户
+const followUser = async (user) => {
+    followingLoading.value[user.id] = true
+    try {
+        await authAPI.followUser(user.id)
+        user.is_following = true
+        store.addFollowing(user.id)
+    } catch (error) {
+        console.error('关注用户失败:', error)
+    } finally {
+        followingLoading.value[user.id] = false
+    }
+}
+
+// 取消关注用户
+const unfollowUser = async (user) => {
+    followingLoading.value[user.id] = true
+    try {
+        await authAPI.unfollowUser(user.id)
+        user.is_following = false
+        store.removeFollowing(user.id)
+    } catch (error) {
+        console.error('取消关注用户失败:', error)
+    } finally {
+        followingLoading.value[user.id] = false
+    }
+}
+
+// 跳转到用户个人资料页
 const goToUserProfile = (userId) => {
     router.push(`/user-profile/${userId}`)
 }
 
-// 处理帖子删除事件
-const handlePostDeleted = (postId) => {
-    posts.value = posts.value.filter(post => post.id !== postId)
+// 跳转到帖子详情页
+const goToPost = (postId) => {
+    router.push(`/post/${postId}`)
 }
 
-// 组件挂载时检查路由参数
-onMounted(() => {
-    const query = new URLSearchParams(window.location.search).get('q')
-    const type = new URLSearchParams(window.location.search).get('type')
-
-    if (query) {
-        searchQuery.value = query
-        if (type) {
-            searchType.value = type
-        }
-        performSearch()
-    }
-})
+// 格式化时间
+const formatTime = (timeString) => {
+    const date = new Date(timeString)
+    return date.toLocaleString('zh-CN')
+}
 </script>
 
 <style scoped>
@@ -151,121 +202,128 @@ onMounted(() => {
     margin-bottom: 30px;
 }
 
-.search-input-container {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
 .search-input {
-    flex: 1;
+    width: 100%;
 }
 
-.search-button {
-    width: 100px;
+.search-content {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    padding: 20px;
 }
 
-.search-filters {
-    display: flex;
-    justify-content: center;
-}
-
-.search-results {
-    min-height: 400px;
-}
-
-.empty-placeholder,
-.no-results {
-    text-align: center;
-    padding: 60px 20px;
-    color: #909399;
-}
-
-.empty-placeholder .el-icon,
-.no-results .el-icon {
-    font-size: 48px;
-    margin-bottom: 16px;
-    color: #C0C4CC;
-}
-
-.results-section {
-    margin-bottom: 40px;
-}
-
-.results-section h3 {
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #EBEEF5;
-    color: #303133;
-}
-
-.users-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
-}
-
-.user-card {
+.user-item {
     display: flex;
     align-items: center;
-    padding: 15px;
-    border: 1px solid #EBEEF5;
-    border-radius: 8px;
+    padding: 15px 0;
+    border-bottom: 1px solid #f0f0f0;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: background-color 0.2s;
 }
 
-.user-card:hover {
-    border-color: #409EFF;
-    box-shadow: 0 2px 12px 0 rgba(64, 158, 255, 0.1);
+.user-item:hover {
+    background-color: #f9f9f9;
+}
+
+.user-item:last-child {
+    border-bottom: none;
 }
 
 .user-info {
-    margin-left: 15px;
     flex: 1;
-    overflow: hidden;
+    margin: 0 15px;
+    min-width: 0;
 }
 
 .username {
-    margin: 0 0 5px 0;
-    font-size: 16px;
     font-weight: 500;
     color: #303133;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    margin-bottom: 5px;
+    font-size: 16px;
 }
 
 .user-bio {
-    margin: 0;
     font-size: 14px;
-    color: #909399;
+    color: #606266;
+    margin-bottom: 8px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.posts-list {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+.user-stats {
+    font-size: 12px;
+    color: #909399;
 }
 
-@media (max-width: 768px) {
-    .search-page {
-        padding: 10px;
-    }
+.user-stats span {
+    margin-right: 10px;
+}
 
-    .search-input-container {
-        flex-direction: column;
-    }
+.user-actions {
+    flex-shrink: 0;
+}
 
-    .search-button {
-        width: 100%;
-    }
+.post-item {
+    padding: 15px 0;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
 
-    .users-grid {
-        grid-template-columns: 1fr;
-    }
+.post-item:hover {
+    background-color: #f9f9f9;
+}
+
+.post-item:last-child {
+    border-bottom: none;
+}
+
+.post-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.post-author {
+    margin-left: 10px;
+}
+
+.author-name {
+    font-weight: 500;
+    color: #303133;
+    font-size: 14px;
+}
+
+.post-time {
+    font-size: 12px;
+    color: #909399;
+}
+
+.post-content {
+    font-size: 14px;
+    color: #606266;
+    line-height: 1.5;
+    margin-bottom: 10px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.post-stats {
+    font-size: 12px;
+    color: #909399;
+}
+
+.post-stats span {
+    margin-right: 15px;
+}
+
+.no-results {
+    padding: 40px 0;
+}
+
+.construction {
+    padding: 40px 0;
 }
 </style>

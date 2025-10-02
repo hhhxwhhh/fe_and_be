@@ -9,6 +9,7 @@ from .views import (
     UpdateProfileView,
     hello_world,
     UserListView,
+    UserSearchView,
 )
 
 urlpatterns = [
@@ -22,4 +23,5 @@ urlpatterns = [
     path("<int:pk>/unfollow/", UnFollowView.as_view(), name="unfollow-user"),
     path("hello/", hello_world, name="hello-world"),
     path("users/", UserListView.as_view(), name="user-list"),  # 添加用户列表API
+    path("search/", UserSearchView.as_view(), name="user-search"),
 ]

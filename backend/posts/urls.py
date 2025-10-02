@@ -6,6 +6,7 @@ from .views import (
     LikeView,
     UserPostsView,
     SearchView,
+    PostSearchView,
 )
 
 urlpatterns = [
@@ -15,4 +16,5 @@ urlpatterns = [
     path("<int:pk>/like/", LikeView.as_view(), name="post-like"),
     path("user/<int:pk>/", UserPostsView.as_view(), name="user-posts"),
     path("search/", SearchView.as_view(), name="search"),
+    path("search/posts/", PostSearchView.as_view(), name="post-search"),
 ]

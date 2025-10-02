@@ -12,6 +12,7 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from rest_framework.parsers import MultiPartParser, FormParser
 from interactions.services import NotificationService
+from rest_framework import filters,generics
 
 # Create your views here.
 User = get_user_model()
@@ -53,6 +54,26 @@ class SearchView(APIView):
             results["users"] = user_serializer.data
 
         return Response({"results": results, "query": query})
+
+
+class PostSearchView(generics.ListAPIView):
+    serializer_class = PostSeralizers
+    permission_classes=[IsAuthenticated]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['content', 'author__username',]
+    ordering_fields = ['created_at', 'updated_at']
+    ordering = ['-created_at']
+    def get_queryset(self):
+        queryset = Post.objects.all()
+        query = self.request.query_params.get('search', None)
+        if query:
+            queryset = queryset.filter(
+                models.Q(content__icontains=query) |
+                models.Q(author__username__icontains=query)
+            ).distinct()
+        return queryset
+
+
 
 
 class PostListView(APIView):

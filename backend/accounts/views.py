@@ -25,6 +25,7 @@ from posts.serializers import PostSeralizers
 from interactions.models import Notification
 from interactions.services import NotificationService
 from rest_framework import filters
+from rest_framework.permissions import IsAuthenticated
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -170,6 +171,17 @@ class CurrentUserProfileView(APIView):
                 UserSeralizers(request.user, context={"request": request}).data
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserSearchView(generics.ListAPIView):
+    serializer_class = UserSeralizers
+    permission_classes = [IsAuthenticated]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['username', 'email', 'bio']
+
+    def get_queryset(self):
+        # 排除当前用户自己
+        return User.objects.exclude(id=self.request.user.id)
 
 
 @api_view(["GET"])
