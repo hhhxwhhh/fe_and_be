@@ -31,10 +31,20 @@
 </template>
 
 <script>
-import { generateText } from '@/api/ai';
+import { generateText, chatCompletion } from '@/api/ai';
 
 export default {
     name: 'AIChatInput',
+    props: {
+        model: {
+            type: String,
+            default: 'deepseek-chat'
+        },
+        contextMessages: {
+            type: Array,
+            default: () => []
+        }
+    },
     data() {
         return {
             inputPrompt: '',
@@ -52,13 +62,32 @@ export default {
             this.isLoading = true;
 
             try {
-                const result = await generateText(this.inputPrompt);
-                if (result.status === 'success') {
-                    this.aiResponse = result.content;
-                    this.usage = result.usage;
-                    this.$emit('response-generated', this.inputPrompt, result.content, result.usage);
+                // 如果有上下文消息，则使用chatCompletion接口
+                if (this.contextMessages.length > 0) {
+                    // 构建包含上下文的完整消息列表
+                    const messages = [
+                        ...this.contextMessages,
+                        { role: 'user', content: this.inputPrompt }
+                    ];
+
+                    const result = await chatCompletion(messages, this.model);
+                    if (result.status === 'success') {
+                        this.aiResponse = result.content;
+                        this.usage = result.usage;
+                        this.$emit('response-generated', this.inputPrompt, result.content, result.usage);
+                    } else {
+                        this.error = result.message || '生成失败';
+                    }
                 } else {
-                    this.error = result.message || '生成失败';
+                    // 否则使用原来的generateText接口
+                    const result = await generateText(this.inputPrompt, 0.7, 2048, this.model);
+                    if (result.status === 'success') {
+                        this.aiResponse = result.content;
+                        this.usage = result.usage;
+                        this.$emit('response-generated', this.inputPrompt, result.content, result.usage);
+                    } else {
+                        this.error = result.message || '生成失败';
+                    }
                 }
             } catch (err) {
                 this.error = err.response?.data?.message || 'AI生成失败，请稍后重试';

@@ -22,14 +22,21 @@
             <el-row :gutter="20">
                 <el-col :xs="24" :sm="24" :md="16" :lg="18">
                     <div class="chat-container">
+                        <!-- 模型选择 -->
+                        <div class="model-selection">
+                            <el-select v-model="selectedModel" placeholder="选择模型" size="small" @change="onModelChange">
+                                <el-option v-for="model in availableModels" :key="model.value" :label="model.label"
+                                    :value="model.value">
+                                </el-option>
+                            </el-select>
+                            <el-button type="danger" plain size="small" @click="clearHistory"
+                                style="margin-left: 10px;">
+                                清空历史
+                            </el-button>
+                        </div>
+
                         <!-- 历史对话区域 -->
                         <div class="history-section" v-if="chatHistory.length">
-                            <div class="section-header">
-                                <h2>对话历史</h2>
-                                <el-button type="danger" plain size="small" @click="clearHistory">
-                                    清空历史
-                                </el-button>
-                            </div>
                             <div class="history-list">
                                 <div v-for="(chat, index) in chatHistory" :key="index" class="chat-item">
                                     <div class="chat-header">
@@ -58,7 +65,7 @@
                                             <div class="message-header">
                                                 <span class="username">AI助手</span>
                                                 <span class="usage-info">Tokens: {{ chat.usage?.total_tokens || 'N/A'
-                                                }}</span>
+                                                    }}</span>
                                             </div>
                                             <div class="message-text">{{ chat.response }}</div>
                                             <div class="message-actions">
@@ -83,10 +90,8 @@
 
                         <!-- 新对话输入区域 -->
                         <div class="input-section">
-                            <div class="section-header">
-                                <h2>开始新对话</h2>
-                            </div>
-                            <AIChatInput @response-generated="addToHistory" ref="aiChatInput" />
+                            <AIChatInput @response-generated="addToHistory" ref="aiChatInput" :model="selectedModel"
+                                :context-messages="getContextMessages()" />
                         </div>
                     </div>
                 </el-col>
@@ -185,7 +190,7 @@
                             <div class="tech-info">
                                 <p>基于DeepSeek大语言模型，支持多种文本生成任务。</p>
                                 <div class="model-info">
-                                    <el-tag type="primary" size="small">deepseek-chat</el-tag>
+                                    <el-tag type="primary" size="small">{{ selectedModel }}</el-tag>
                                     <el-tag type="success" size="small">2048 tokens</el-tag>
                                 </div>
                             </div>
@@ -233,7 +238,12 @@ export default {
     },
     data() {
         return {
-            chatHistory: []
+            chatHistory: [],
+            selectedModel: 'deepseek-chat',
+            availableModels: [
+                { label: 'DeepSeek Chat', value: 'deepseek-chat' },
+                { label: 'DeepSeek Coder', value: 'deepseek-coder' }
+            ]
         };
     },
     methods: {
@@ -273,6 +283,20 @@ export default {
                 hour: '2-digit',
                 minute: '2-digit'
             });
+        },
+        onModelChange() {
+            this.$message.success(`已切换到 ${this.availableModels.find(m => m.value === this.selectedModel)?.label} 模型`);
+        },
+        getContextMessages() {
+            // 将最近几轮对话作为上下文传递
+            const context = [];
+            // 取最近5轮对话作为上下文
+            const recentChats = this.chatHistory.slice(0, 5).reverse();
+            for (const chat of recentChats) {
+                context.push({ role: 'user', content: chat.prompt });
+                context.push({ role: 'assistant', content: chat.response });
+            }
+            return context;
         }
     }
 };
@@ -334,6 +358,12 @@ export default {
     height: 100%;
     display: flex;
     flex-direction: column;
+}
+
+.model-selection {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
 }
 
 .section-header {
@@ -526,6 +556,11 @@ export default {
 
     .header-text h1 {
         font-size: 20px;
+    }
+
+    .model-selection {
+        flex-direction: column;
+        align-items: flex-end;
     }
 }
 </style>
