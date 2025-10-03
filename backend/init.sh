@@ -70,8 +70,12 @@ else:
 "
 
 echo "Loading initial data..."
-python manage.py loaddata all_data
-
+if [ -f "/app/all_data.json" ]; then
+    python manage.py loaddata /app/all_data.json
+    echo "Initial data loaded successfully."
+else
+    echo "No initial data file found. Continuing..."
+fi
 
 # 启动服务器
 echo "Starting server..."
