@@ -69,6 +69,10 @@ else:
     print('Superuser already exists.')
 "
 
+echo "Loading initial data..."
+python manage.py loaddata all_data
+
+
 # 启动服务器
 echo "Starting server..."
 exec daphne -b 0.0.0.0 -p 8000 myproject.asgi:application
