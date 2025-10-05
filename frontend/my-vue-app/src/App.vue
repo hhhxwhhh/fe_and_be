@@ -244,19 +244,29 @@ onMounted(async () => {
   </el-container>
 </template>
 
+<style>
+  body {
+    background-color: var(--chat-background);
+    color: var(--chat-textPrimary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+</style>
+
+
 <style scoped>
 #app {
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: #2c3e50;
+  /* 基础文字颜色由 body 继承，这里可以移除 */
   height: 100vh;
 }
 
 .header {
   padding: 0;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--chat-headerBackground);
+  transition: background 0.3s ease;
 }
 
 .header-container {
@@ -288,7 +298,7 @@ onMounted(async () => {
 
 .nav-brand h2 {
   margin: 0;
-  color: white;
+  color: var(--chat-headerText);
   font-size: 1.3rem;
   font-weight: 600;
 }
@@ -306,7 +316,7 @@ onMounted(async () => {
   align-items: center;
   padding: 0 20px !important;
   font-size: 15px;
-  color: rgba(255, 255, 255, 0.85) !important;
+  color: var(--chat-headerText) !important;
   font-weight: 500;
   border-radius: 8px;
   margin: 0 5px;
@@ -314,13 +324,13 @@ onMounted(async () => {
 }
 
 .nav-menu :deep(.el-menu-item:hover) {
-  background: rgba(255, 255, 255, 0.1) !important;
-  color: white !important;
+  background: var(--chat-headerHoverBg) !important;
+  color: var(--chat-headerText) !important;
 }
 
 .nav-menu :deep(.el-menu-item.is-active) {
-  background: rgba(255, 255, 255, 0.2) !important;
-  color: white !important;
+  background: var(--chat-headerHoverBg) !important;
+  color: var(--chat-headerText) !important;
 }
 
 .nav-icon {
@@ -341,7 +351,7 @@ onMounted(async () => {
 }
 
 .nav-search-input :deep(.el-input__wrapper) {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--chat-headerInputBg);
   border: none;
   box-shadow: none;
   border-radius: 20px;
@@ -349,24 +359,24 @@ onMounted(async () => {
 }
 
 .nav-search-input :deep(.el-input__wrapper:hover) {
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--chat-headerHoverBg);
 }
 
 .nav-search-input :deep(.el-input__wrapper.is-focus) {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--chat-headerHoverBg);
 }
 
 .nav-search-input :deep(.el-input__inner) {
-  color: white;
-  caret-color: white;
+  color: var(--chat-headerText);
+  caret-color: var(--chat-headerText);
 }
 
 .nav-search-input :deep(.el-input__inner::placeholder) {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--chat-headerPlaceholderText);
 }
 
 .nav-search-input :deep(.el-input__prefix) {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--chat-headerPlaceholderText);
 }
 
 .nav-right {
@@ -383,7 +393,7 @@ onMounted(async () => {
   padding: 6px 12px;
   border-radius: 20px;
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--chat-headerText);
   font-size: 14px;
   font-weight: 500;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -398,7 +408,7 @@ onMounted(async () => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--chat-headerHoverBg);
   opacity: 0;
   transition: opacity 0.3s ease;
   z-index: -1;
@@ -406,7 +416,7 @@ onMounted(async () => {
 }
 
 .nav-icon-button:hover {
-  color: white;
+  color: var(--chat-headerText);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
@@ -427,12 +437,12 @@ onMounted(async () => {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--chat-headerHoverBg);
   transition: all 0.3s ease;
 }
 
 .nav-icon-button:hover .icon-wrapper {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--chat-headerInputBg);
   transform: scale(1.1);
 }
 
@@ -456,10 +466,11 @@ onMounted(async () => {
 }
 
 .user-info:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--chat-headerHoverBg);
 }
 
 .user-avatar {
+  /* 头像的渐变色通常保持不变，因为它是一个品牌或装饰元素 */
   background: linear-gradient(135deg, #42b883, #3498db);
   border: 2px solid rgba(255, 255, 255, 0.3);
   transition: all 0.3s ease;
@@ -471,7 +482,7 @@ onMounted(async () => {
 
 .username {
   font-weight: 500;
-  color: white;
+  color: var(--chat-headerText);
   font-size: 14px;
 }
 
@@ -484,7 +495,7 @@ onMounted(async () => {
   height: 64px;
   line-height: 64px;
   border: none !important;
-  color: rgba(255, 255, 255, 0.85) !important;
+  color: var(--chat-headerText) !important;
   font-weight: 500;
   padding: 0 15px !important;
   border-radius: 8px;
@@ -493,8 +504,8 @@ onMounted(async () => {
 }
 
 .auth-menu :deep(.el-menu-item:hover) {
-  background: rgba(255, 255, 255, 0.1) !important;
-  color: white !important;
+  background: var(--chat-headerHoverBg) !important;
+  color: var(--chat-headerText) !important;
 }
 
 @media (max-width: 768px) {

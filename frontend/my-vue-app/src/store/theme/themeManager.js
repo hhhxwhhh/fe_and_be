@@ -6,24 +6,38 @@ const themes = {
     name: '浅色主题',
     class: 'light-theme',
     colors: {
+      // --- 原有的变量 ---
       primary: '#409eff',
-      background: '#f0f2f5',
+      background: '#f5f7fa',
       cardBackground: '#ffffff',
       textPrimary: '#303133',
       textSecondary: '#909399',
-      border: '#e4e7ed'
+      border: '#dcdfe6',
+      // --- 新增的 header 专属变量 ---
+      headerBackground: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      headerText: '#ffffff',
+      headerHoverBg: 'rgba(255, 255, 255, 0.1)', // 鼠标悬停/交互背景
+      headerInputBg: 'rgba(255, 255, 255, 0.15)', // 输入框背景
+      headerPlaceholderText: 'rgba(255, 255, 255, 0.7)' // 输入框占位符文字
     }
   },
   dark: {
     name: '深色主题',
     class: 'dark-theme',
     colors: {
-      primary: '#66b1ff',
-      background: '#141414',
-      cardBackground: '#1d1d1d',
-      textPrimary: '#e5e5e5',
-      textSecondary: '#a3a3a3',
-      border: '#3a3a3a'
+      // --- 原有的变量 ---
+      primary: '#409eff',
+      background: '#1a1a1a',
+      cardBackground: '#2d2d2d',
+      textPrimary: '#ffffff',
+      textSecondary: '#b2b2b2',
+      border: '#444444',
+      // --- 新增的 header 专属变量 ---
+      headerBackground: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)',
+      headerText: '#e5e5e5', // 使用灰白色，不刺眼
+      headerHoverBg: 'rgba(255, 255, 255, 0.08)', // 深色模式下透明度可以更低
+      headerInputBg: 'rgba(255, 255, 255, 0.1)',
+      headerPlaceholderText: 'rgba(255, 255, 255, 0.5)' // 深色模式下占位符可以更暗
     }
   }
 }

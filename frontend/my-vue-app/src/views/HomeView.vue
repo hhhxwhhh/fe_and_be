@@ -269,6 +269,7 @@ const goToForum = () => {
     </el-row>
   </div>
 </template>
+
 <style scoped>
 .home {
   padding: 0;
@@ -279,7 +280,8 @@ const goToForum = () => {
 .hero-section {
   position: relative;
   height: 500px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  /* 使用 App.vue 里定义的 header 背景变量 */
+  background: var(--chat-headerBackground);
   border-radius: 0 0 20px 20px;
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
@@ -309,7 +311,8 @@ const goToForum = () => {
 .hero-text {
   position: relative;
   text-align: center;
-  color: white;
+  /* 使用 App.vue 里定义的 header 文字变量 */
+  color: var(--chat-headerText);
   z-index: 2;
   max-width: 800px;
   padding: 0 20px;
@@ -319,7 +322,7 @@ const goToForum = () => {
   font-size: 3rem;
   margin-bottom: 1rem;
   font-weight: 700;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
   animation: fadeInDown 1s ease;
 }
 
@@ -359,9 +362,11 @@ const goToForum = () => {
   padding: 12px 30px;
   font-size: 1.1rem;
   border: none;
+  color: var(--chat-headerText);
   box-shadow: 0 4px 15px rgba(0,0,0,0.2);
   transition: all 0.3s ease;
 }
+
 
 .hero-btn:hover {
   transform: translateY(-3px);
@@ -369,8 +374,8 @@ const goToForum = () => {
 }
 
 .forum-btn {
-  background: #28a745;
-  border-color: #28a745;
+  background: var(--chat-primary);
+  border-color: var(--chat-primary);
 }
 
 .stats-section {
@@ -388,7 +393,8 @@ const goToForum = () => {
 }
 
 .stat-card {
-  background:  var(--chat-cardBackground); 
+  background: var(--chat-cardBackground);
+  border: 1px solid var(--chat-border); /* 添加边框以在深色模式下区分 */
   border-radius: 15px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   padding: 30px;
@@ -407,6 +413,7 @@ const goToForum = () => {
 }
 
 .stat-icon {
+  /* 图标的渐变色通常作为装饰，可以保持不变 */
   width: 70px;
   height: 70px;
   border-radius: 50%;
@@ -474,19 +481,20 @@ const goToForum = () => {
 }
 
 .preview-card {
+  background: var(--chat-cardBackground); /* 应用卡片背景色 */
+  border: 1px solid var(--chat-border); /* 应用边框色 */
   border-radius: 15px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-  border: none;
   overflow: hidden;
 }
 
 .latest-posts-card {
-  border-top: 4px solid #409eff;
+  border-top: 4px solid var(--chat-primary); 
 }
 
 .preview-card :deep(.el-card__header) {
-  background: #f8f9fa;
-  border-bottom: 1px solid #eee;
+  background: var(--chat-background); /* 卡片头部的背景色应比卡片内容更深/浅一点 */
+  border-bottom: 1px solid var(--chat-border);
   padding: 20px;
 }
 
@@ -494,7 +502,7 @@ const goToForum = () => {
   font-size: 1.4rem;
   font-weight: 600;
   text-align: center;
-  color: #333;
+  color: var(--chat-textPrimary);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -514,13 +522,13 @@ const goToForum = () => {
 
 .post-preview-item {
   padding: 1.5rem;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--chat-border);
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .post-preview-item:hover {
-  background-color: #f8f9fa;
+  background-color: var(--chat-background);
   transform: translateX(5px);
 }
 
@@ -531,7 +539,7 @@ const goToForum = () => {
 .post-title {
   margin: 0 0 0.8rem 0;
   font-size: 1.2rem;
-  color: #333;
+  color: var(--chat-textPrimary);
   font-weight: 600;
 }
 
@@ -540,7 +548,7 @@ const goToForum = () => {
   flex-wrap: wrap;
   gap: 1.5rem;
   font-size: 0.9rem;
-  color: #666;
+  color: var(--chat-textSecondary);
 }
 
 .view-all {
@@ -552,14 +560,14 @@ const goToForum = () => {
 .no-posts {
   text-align: center;
   padding: 3rem;
-  color: #666;
+  color: var(--chat-textSecondary);
 }
 
 .features-card {
-  margin-bottom: 25px;
+  background: var(--chat-cardBackground); /* 应用卡片背景色 */
+  border: 1px solid var(--chat-border); /* 应用边框色 */
   border-radius: 15px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-  border: none;
   overflow: hidden;
 }
 
@@ -572,8 +580,8 @@ const goToForum = () => {
 }
 
 .features-card :deep(.el-card__header) {
-  background: #f8f9fa;
-  border-bottom: 1px solid #eee;
+  background: var(--chat-background); /* 卡片头部的背景色应比卡片内容更深/浅一点 */
+  border-bottom: 1px solid var(--chat-border);
   padding: 20px;
 }
 
@@ -608,13 +616,13 @@ const goToForum = () => {
 .feature-item h3 {
   margin: 0 0 0.8rem 0;
   font-size: 1.3rem;
-  color: #333;
+  color: var(--chat-textPrimary);
   font-weight: 600;
 }
 
 .feature-item p {
   margin: 0;
-  color: #666;
+  color: var(--chat-textSecondary);
   font-size: 1rem;
   line-height: 1.5;
   flex: 1;
@@ -639,12 +647,12 @@ const goToForum = () => {
 .stat-number {
   font-size: 1.8rem;
   font-weight: bold;
-  color: #409eff;
+  color: var(--chat-primary); 
 }
 
 .stat-label {
   font-size: 0.9rem;
-  color: #666;
+  color: var(--chat-textSecondary);
 }
 
 .full-width-btn {
