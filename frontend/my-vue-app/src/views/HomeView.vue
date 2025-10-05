@@ -388,7 +388,7 @@ const goToForum = () => {
 }
 
 .stat-card {
-  background: white;
+  background:  var(--chat-cardBackground); 
   border-radius: 15px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   padding: 30px;
@@ -436,14 +436,14 @@ const goToForum = () => {
 
 .stat-info :deep(.el-statistic__head) {
   font-size: 18px;
-  color: #666;
+  color: var(--chat-textSecondary);
   margin-bottom: 10px;
 }
 
 .stat-info :deep(.el-statistic__content) {
   font-size: 28px;
   font-weight: 700;
-  color: #333;
+  color: var(--chat-textPrimary);
 }
 
 .content-section {

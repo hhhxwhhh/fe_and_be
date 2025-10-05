@@ -7,23 +7,23 @@ const themes = {
     class: 'light-theme',
     colors: {
       primary: '#409eff',
-      background: '#f5f7fa',
+      background: '#f0f2f5',
       cardBackground: '#ffffff',
       textPrimary: '#303133',
       textSecondary: '#909399',
-      border: '#dcdfe6'
+      border: '#e4e7ed'
     }
   },
   dark: {
     name: '深色主题',
     class: 'dark-theme',
     colors: {
-      primary: '#409eff',
-      background: '#1a1a1a',
-      cardBackground: '#2d2d2d',
-      textPrimary: '#ffffff',
-      textSecondary: '#b2b2b2',
-      border: '#444444'
+      primary: '#66b1ff',
+      background: '#141414',
+      cardBackground: '#1d1d1d',
+      textPrimary: '#e5e5e5',
+      textSecondary: '#a3a3a3',
+      border: '#3a3a3a'
     }
   }
 }
@@ -49,15 +49,15 @@ const toggleTheme = () => {
 
 // 应用主题
 const applyTheme = () => {
-  // 移除所有主题类
+  // 移除所有可能存在的主题类
   Object.values(state.themes).forEach(theme => {
     document.body.classList.remove(theme.class)
   })
-  
-  // 添加当前主题类
+
+  // 添加当前主题对应的类
   const currentTheme = getCurrentTheme()
   document.body.classList.add(currentTheme.class)
-  
+
   // 应用CSS变量
   const root = document.documentElement
   Object.entries(currentTheme.colors).forEach(([key, value]) => {
@@ -77,7 +77,7 @@ const initTheme = () => {
       state.currentTheme = 'dark'
     }
   }
-  
+
   applyTheme()
 }
 
