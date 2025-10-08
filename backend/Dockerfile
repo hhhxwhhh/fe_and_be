@@ -33,7 +33,8 @@ COPY init.sh /app/init.sh
 RUN chmod +x /app/init.sh
 
 # 创建非 root 用户
-RUN adduser --disabled-password --gecos '' appuser && chown -R appuser:appuser /app
+RUN adduser --disabled-password --gecos '' appuser && chown -R appuser:appuser /app && \
+    chown -R appuser:appuser /app/staticfiles
 
 # 切换到非 root 用户
 USER appuser

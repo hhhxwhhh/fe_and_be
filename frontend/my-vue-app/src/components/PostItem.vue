@@ -4,6 +4,7 @@ import { useMainStore } from '../store'
 import { postAPI, likeAPI, commentAPI, authAPI } from '../api'
 import { useRouter } from 'vue-router'
 import CommentForm from './CommentForm.vue'
+import CommentItem from './CommentItem.vue' 
 
 const props = defineProps({
   post: {
@@ -40,11 +41,17 @@ const toggleLike = async () => {
 }
 
 const handleCommentAdded = (newComment) => {
+  // 这个函数现在只处理顶层评论
   if (!props.post.comments) {
-    props.post.comments = [];
+    props.post.comments = []
   }
-  //props.post.comments.push(newComment); 避免重复进行添加
-  store.addCommentToPost(props.post.id, newComment);
+  props.post.comments.unshift(newComment) // 用 unshift 让新评论显示在最上面
+}
+
+const handleReplyAdded = (newReply) => {
+  // 当有新的回复时，我们只需要简单地增加总评论数
+  // 因为 CommentItem 内部已经处理了 replies 数组的更新
+  props.post.comments_count += 1 
 }
 
 const deletePost = async () => {
@@ -95,7 +102,7 @@ const goToUserProfile = (userId) => {
   <div class="post-item">
     <div class="post-header">
       <div class="post-author">
-        <h3 @click="goToUserProfile(post.author_id)" class="author-link">{{ post.author }}</h3>
+        <h3 @click="goToUserProfile(post.author_id)" class="author-link">{{ post.author.username }}</h3>
         <div v-if="store.user && store.user.id !== post.author_id" class="follow-actions">
           <button v-if="!post.is_following" @click="followUser(post.author_id)" class="follow-button">
             关注
@@ -132,18 +139,13 @@ const goToUserProfile = (userId) => {
 
     <div v-if="showComments" class="post-comments">
       <div class="comments-list">
-        <div v-for="comment in post.comments" :key="comment.id" class="comment">
-          <div class="comment-header">
-            <strong>{{ comment.author }}</strong>
-            <span class="comment-date">{{ new Date(comment.created_at).toLocaleDateString() }}</span>
-          </div>
-          <div class="comment-content">
-            <p>{{ comment.content }}</p>
-            <div v-if="comment.image" class="comment-image">
-              <img :src="comment.image" alt="Comment image" />
-            </div>
-          </div>
-        </div>
+        <CommentItem 
+          v-for="comment in post.comments" 
+          :key="comment.id" 
+          :comment="comment"
+          @reply-added="handleReplyAdded"
+       />
+
         <div v-if="!post.comments || post.comments.length === 0" class="no-comments">
           暂无评论，来抢沙发吧！
         </div>

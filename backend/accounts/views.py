@@ -1,3 +1,5 @@
+# backend/accounts/views.py
+
 import os
 from django.shortcuts import render
 from rest_framework import generics, status, permissions, viewsets
@@ -8,11 +10,15 @@ from rest_framework.decorators import api_view, permission_classes
 from django.contrib.auth import authenticate
 from django.http import JsonResponse
 from .models import User
+# --- 核心修改 1: 修正导入 ---
 from .serializers import (
-    UserSeralizers,
+    UserDetailSerializer, 
     UserRegistrationSerializer,
     UserUpdateSerializer,
+    UserSerializer 
 )
+from posts.serializers import PostSerializer # 修正拼写
+# --- 修改结束 ---
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.db.models import Q
@@ -21,7 +27,6 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from django.shortcuts import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
 from posts.models import Post
-from posts.serializers import PostSeralizers
 from interactions.models import Notification
 from interactions.services import NotificationService
 from rest_framework import filters
@@ -30,26 +35,27 @@ from rest_framework.permissions import IsAuthenticated
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    serializer_class = UserSeralizers
+    # --- 核心修改 2: 修正序列化器引用 ---
+    serializer_class = UserDetailSerializer # 使用详细版
+    # --- 修改结束 ---
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ["username", "email", "profile__bio", "profile__name"]
+    search_fields = ["username", "email", "bio"] # 假设 User 模型有 bio 字段
     ordering_fields = ["date_joined", "last_login"]
     ordering = ["-date_joined"]
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        # 可以添加额外的过滤逻辑
         return queryset
 
 
-# 添加用户列表视图
 class UserListView(generics.ListAPIView):
-    serializer_class = UserSeralizers
+    # --- 核心修改 3: 使用基础版 UserSerializer ---
+    serializer_class = UserSerializer # 列表不需要帖子的详细信息，用基础版更高效
+    # --- 修改结束 ---
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # 排除当前用户自己
         return User.objects.exclude(id=self.request.user.id)
 
 
@@ -65,11 +71,12 @@ class RegisterView(APIView):
                 {
                     "refresh": str(refresh),
                     "access": str(refresh.access_token),
-                    "user": UserSeralizers(user, context={"request": request}).data,
+                    # --- 核心修改 4: 使用详细版 ---
+                    "user": UserDetailSerializer(user, context={"request": request}).data,
+                    # --- 修改结束 ---
                 },
                 status=status.HTTP_201_CREATED,
             )
-        # 返回详细的错误信息
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -87,7 +94,9 @@ class LoginView(APIView):
                 {
                     "refresh": str(refresh),
                     "access": str(refresh.access_token),
-                    "user": UserSeralizers(user, context={"request": request}).data,
+                    # --- 核心修改 5: 使用详细版 ---
+                    "user": UserDetailSerializer(user, context={"request": request}).data,
+                    # --- 修改结束 ---
                 }
             )
         return Response(
@@ -99,7 +108,9 @@ class UserProfileView(APIView):
     def get(self, request, pk):
         try:
             user = User.objects.get(pk=pk)
-            serializer = UserSeralizers(user, context={"request": request})
+            # --- 核心修改 6: 使用详细版 ---
+            serializer = UserDetailSerializer(user, context={"request": request})
+            # --- 修改结束 ---
             return Response(serializer.data)
         except User.DoesNotExist:
             return Response(
@@ -108,6 +119,7 @@ class UserProfileView(APIView):
 
 
 class FollowView(APIView):
+    permission_classes = [IsAuthenticated] # 添加权限
     def post(self, request, pk):
         try:
             user_to_follow = User.objects.get(pk=pk)
@@ -128,6 +140,7 @@ class FollowView(APIView):
 
 
 class UnFollowView(APIView):
+    permission_classes = [IsAuthenticated] # 添加权限
     def post(self, request, pk):
         try:
             user_to_unfollow = User.objects.get(pk=pk)
@@ -149,9 +162,11 @@ class UpdateProfileView(APIView):
         serializer = UserUpdateSerializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
+            # --- 核心修改 7: 使用详细版 ---
             return Response(
-                UserSeralizers(request.user, context={"request": request}).data
+                UserDetailSerializer(request.user, context={"request": request}).data
             )
+            # --- 修改结束 ---
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -160,27 +175,32 @@ class CurrentUserProfileView(APIView):
     parser_classes = [MultiPartParser, FormParser]
 
     def get(self, request):
-        serializer = UserSeralizers(request.user, context={"request": request})
+        # --- 核心修改 8: 使用详细版 ---
+        serializer = UserDetailSerializer(request.user, context={"request": request})
+        # --- 修改结束 ---
         return Response(serializer.data)
 
     def put(self, request):
         serializer = UserUpdateSerializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
+            # --- 核心修改 9: 使用详细版 ---
             return Response(
-                UserSeralizers(request.user, context={"request": request}).data
+                UserDetailSerializer(request.user, context={"request": request}).data
             )
+            # --- 修改结束 ---
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserSearchView(generics.ListAPIView):
-    serializer_class = UserSeralizers
+    # --- 核心修改 10: 使用基础版 ---
+    serializer_class = UserSerializer
+    # --- 修改结束 ---
     permission_classes = [IsAuthenticated]
     filter_backends = [filters.SearchFilter]
     search_fields = ['username', 'email', 'bio']
 
     def get_queryset(self):
-        # 排除当前用户自己
         return User.objects.exclude(id=self.request.user.id)
 
 

@@ -162,7 +162,7 @@ const goToForum = () => {
             >
               <h3 class="post-title">{{ post.content.substring(0, 60) }}{{ post.content.length > 60 ? '...' : '' }}</h3>
               <div class="post-meta">
-                <span class="author">作者: {{ post.author }}</span>
+                <span class="author">作者: {{ post.author.username }}</span>
                 <span class="date">{{ formatDate(post.created_at) }}</span>
                 <span class="likes">👍 {{ post.likes_count || 0 }}</span>
                 <span class="comments">💬 {{ post.comments?.length || 0 }}</span>

@@ -2,12 +2,24 @@
 import { ref } from 'vue'
 import { commentAPI } from '../api'
 
+// --- 核心修改 1: 接收新的 props ---
 const props = defineProps({
   postId: {
     type: Number,
     required: true
+  },
+  // parentId 是可选的，用于指定回复的是哪条评论
+  parentId: {
+    type: Number,
+    default: null
+  },
+  // isReply 是一个布尔值，用于调整 UI 显示
+  isReply: {
+    type: Boolean,
+    default: false
   }
 })
+// --- 修改结束 ---
 
 const emit = defineEmits(['commentAdded'])
 
@@ -19,23 +31,19 @@ const error = ref('')
 const handleImageUpload = (event) => {
   const file = event.target.files[0]
   if (file) {
-    // 检查文件大小（例如限制为5MB）
     if (file.size > 5 * 1024 * 1024) {
       error.value = '图片大小不能超过5MB'
       image.value = null
-      event.target.value = '' // 清空输入
+      event.target.value = ''
       return
     }
-    
-    // 检查文件类型
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg']
     if (!allowedTypes.includes(file.type)) {
       error.value = '只支持JPEG、PNG、GIF以及JPG格式的图片'
       image.value = null
-      event.target.value = '' // 清空输入
+      event.target.value = ''
       return
     }
-    
     image.value = file
     error.value = ''
   }
@@ -62,6 +70,12 @@ const submitComment = async () => {
     if (image.value) {
       formData.append('image', image.value)
     }
+
+    // --- 核心修改 2: 如果是回复，添加 parent 字段 ---
+    if (props.parentId) {
+      formData.append('parent', props.parentId)
+    }
+    // --- 修改结束 ---
     
     const response = await commentAPI.createComment(props.postId, formData)
     
@@ -69,16 +83,14 @@ const submitComment = async () => {
     content.value = ''
     image.value = null
     
-    // 重置文件输入
     const fileInput = document.querySelector('.comment-file-input')
     if (fileInput) fileInput.value = ''
-  } catch (error) {
-    console.error('添加评论失败:', error)
-    if (error.response && error.response.data) {
-      // 显示后端返回的具体错误信息
-      if (typeof error.response.data === 'object') {
+  } catch (err) { // 使用 err 避免与外层 error 变量冲突
+    console.error('添加评论/回复失败:', err)
+    if (err.response && err.response.data) {
+      if (typeof err.response.data === 'object') {
         const errorMessages = []
-        for (const [field, messages] of Object.entries(error.response.data)) {
+        for (const [field, messages] of Object.entries(err.response.data)) {
           if (Array.isArray(messages)) {
             errorMessages.push(`${field}: ${messages.join(', ')}`)
           } else {
@@ -87,10 +99,10 @@ const submitComment = async () => {
         }
         error.value = errorMessages.join('; ')
       } else {
-        error.value = error.response.data
+        error.value = err.response.data
       }
     } else {
-      error.value = '添加评论失败，请稍后重试'
+      error.value = '操作失败，请稍后重试'
     }
   } finally {
     loading.value = false
@@ -104,9 +116,10 @@ const submitComment = async () => {
       {{ error }}
     </div>
     
+    <!-- --- 核心修改 3: 根据 isReply 调整 UI --- -->
     <textarea 
       v-model="content"
-      placeholder="添加评论..."
+      :placeholder="isReply ? '发表你的回复...' : '添加评论...'"
       rows="3"
     ></textarea>
     
@@ -139,10 +152,11 @@ const submitComment = async () => {
           class="submit-button"
         >
           <span v-if="loading" class="loading-spinner"></span>
-          {{ loading ? '提交中...' : '发布评论' }}
+          {{ loading ? '提交中...' : (isReply ? '回复' : '发布评论') }}
         </button>
       </div>
     </div>
+    <!-- --- 修改结束 --- -->
   </div>
 </template>
 

@@ -6,13 +6,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Post, Comment
 from interactions.models import Like, Notification
-from .serializers import PostSeralizers, CommentSeralizers
 from interactions.models import Like
 from django.contrib.auth import get_user_model
 from django.db import models
 from rest_framework.parsers import MultiPartParser, FormParser
 from interactions.services import NotificationService
 from rest_framework import filters,generics
+from .serializers import PostSerializer, CommentSerializer
 
 # Create your views here.
 User = get_user_model()
@@ -36,7 +36,7 @@ class SearchView(APIView):
                 models.Q(content__icontains=query)
                 | models.Q(author__username__icontains=query)
             ).distinct()
-            post_serializer = PostSeralizers(
+            post_serializer = PostSerializer(
                 post_queryset, many=True, context={"request": request}
             )
             results["posts"] = post_serializer.data
@@ -57,7 +57,7 @@ class SearchView(APIView):
 
 
 class PostSearchView(generics.ListAPIView):
-    serializer_class = PostSeralizers
+    serializer_class = PostSerializer
     permission_classes=[IsAuthenticated]
     filter_backends = [filters.SearchFilter]
     search_fields = ['content', 'author__username',]
@@ -92,11 +92,11 @@ class PostListView(APIView):
         else:
             posts = Post.objects.all()
 
-        serializer = PostSeralizers(posts, many=True, context={"request": request})
+        serializer = PostSerializer(posts, many=True, context={"request": request})
         return Response(serializer.data)
 
     def post(self, request):
-        serializer = PostSeralizers(data=request.data, context={"request": request})
+        serializer = PostSerializer(data=request.data, context={"request": request})
         if serializer.is_valid():
             serializer.save(author=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -110,7 +110,7 @@ class PostDetailView(APIView):
     def get(self, request, pk):
         try:
             post = Post.objects.get(pk=pk)
-            serializer = PostSeralizers(post, context={"request": request})
+            serializer = PostSeiralizer(post, context={"request": request})
             return Response(serializer.data)
         except Post.DoesNotExist:
             return Response(
@@ -126,7 +126,7 @@ class PostDetailView(APIView):
                     status=status.HTTP_403_FORBIDDEN,
                 )
 
-            serializer = PostSeralizers(
+            serializer = PostSerializer(
                 post, data=request.data, context={"request": request}
             )
             if serializer.is_valid():
@@ -161,24 +161,25 @@ class CommentView(APIView):
     def post(self, request, pk):
         try:
             post = Post.objects.get(pk=pk)
-            # 检查是否至少提供了内容或图片
-            content = request.data.get("content", "").strip()
-            image = request.FILES.get("image")
-
-            if not content and not image:
-                return Response(
-                    {"content": "评论内容或图片不能为空"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            serializer = CommentSeralizers(
-                data=request.data, context={"request": request}
+            
+            data = request.data.copy()
+            
+            serializer = CommentSerializer(
+                data=data, 
+                context={"request": request}
             )
+            
             if serializer.is_valid():
-                comment = serializer.save(author=request.user, post=post)
-                if post.author != request.user:
+
+                comment = serializer.save(post=post)
+
+                if comment.parent and comment.parent.author != request.user:
+                    pass
+                elif not comment.parent and post.author != request.user:
                     NotificationService.create_comment_notification(comment)
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+                response_serializer = CommentSerializer(comment, context={"request": request})
+                return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Post.DoesNotExist:
@@ -258,7 +259,7 @@ class UserPostsView(APIView):
         try:
             user = User.objects.get(pk=pk)
             posts = Post.objects.filter(author=user)
-            serializer = PostSeralizers(posts, many=True, context={"request": request})
+            serializer = PostSerializer(posts, many=True, context={"request": request})
             return Response(serializer.data)
         except User.DoesNotExist:
             return Response(
